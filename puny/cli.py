@@ -6,7 +6,7 @@ from .vault import init_vault
 from .listing import list_entries
 from .adding import add_entry
 from .getting import get_entry
-
+from .generator import generate_password
 
 def ask_master_password() -> str:
     return getpass("Master-Passwort: ")
@@ -26,6 +26,16 @@ def main():
 
     get_parser = subparsers.add_parser("get", help="Zeigt einen Eintrag")
     get_parser.add_argument("name", help="Name des Eintrags")
+
+
+    gen_parser = subparsers.add_parser("gen", help="Generiert ein sicheres Passwort")
+    gen_parser.add_argument(
+            "length",
+            nargs="?",
+            type=int,
+            default=20,
+            help="Passwordlänge (STandard: 20)"
+    )
 
     args = parser.parse_args()
 
@@ -76,6 +86,13 @@ def main():
             print(f"Username: {entry['username']}")
             print(f"Passwort: {entry['password']}")
         except Exception as e:
+            print(f"✗ Fehler: {e}")
+
+    elif args.command == "gen":
+        try:
+            password = generate_password(args.length)
+            print(password)
+        except ValueError as e:
             print(f"✗ Fehler: {e}")
 
 

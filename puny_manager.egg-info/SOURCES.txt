@@ -4,6 +4,7 @@ puny/__init__.py
 puny/adding.py
 puny/cli.py
 puny/crypto.py
+puny/generator.py
 puny/getting.py
 puny/listing.py
 puny/paths.py
