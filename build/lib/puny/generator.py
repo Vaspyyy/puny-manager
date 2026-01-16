@@ -1,6 +1,7 @@
 
 import secrets
 import string
+from .i18n import t
 
 DEFAULT_LENGTH = 20
 
@@ -13,6 +14,6 @@ ALPHABET = (
 
 def generate_password(length: int = DEFAULT_LENGTH) -> str:
     if length < 8:
-        raise ValuError("Passwort länge muss mindestens 8 sein")
+        raise ValueError(t("password_length_error"))
 
     return "".join(secrets.choice(ALPHABET) for _ in range(length))

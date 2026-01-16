@@ -6,6 +6,7 @@ puny/cli.py
 puny/crypto.py
 puny/generator.py
 puny/getting.py
+puny/i18n.py
 puny/listing.py
 puny/paths.py
 puny/removing.py

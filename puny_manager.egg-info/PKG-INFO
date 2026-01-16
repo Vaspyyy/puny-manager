@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: puny-manager
-Version: 1.0.0
+Version: 1.1.0
 Summary: Puny Manager – minimaler, verschlüsselter Passwortmanager
 Requires-Python: >=3.10
 Requires-Dist: cryptography

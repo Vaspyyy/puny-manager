@@ -1,5 +1,6 @@
 
 from .storage import load_vault
+from .i18n import t
 
 def get_entry(master_password: str, name: str) -> dict:
     vault = load_vault(master_password)
@@ -8,5 +9,5 @@ def get_entry(master_password: str, name: str) -> dict:
         if entry["name"] == name:
             return entry
 
-    raise KeyError(f"Eintrag '{name}' nicht gefunden!")
+    raise KeyError(t("entry_not_found", name=name))
 
