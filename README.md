@@ -5,6 +5,8 @@ Puny Manager is a minimal, local, CLI password manager for Linux.
 It stores all passwords in a single encrypted vault file protected by a master password.
 The vault is fully encrypted and unreadable without the master password.
 
+Note: To use clipboard feature you need wl-clipboard (wayland) or xclip (x11)
+
 # Security
 
 - Vault encryption: AES-256-GCM
