@@ -40,3 +40,8 @@ Retrieve an entry:
 ```bash
 puny-manager get <name>
 ```
+Generate a new password:
+```bash
+puny-manager gen
+```
+
