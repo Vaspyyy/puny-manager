@@ -125,6 +125,68 @@ STRINGS = {
         # lang
         "lang_set": "Sprache gesetzt auf {lang}",
     },
+
+    "ru": {
+        # generic
+        "error_prefix": "✗ Ошибка: ",
+        "success_prefix": "✓ ",
+
+        # prompts
+        "master_password": "Мастер-пароль: ",
+        "set_master_password": "Установить мастер-пароль: ",
+        "repeat_master_password": "Повторите мастер-пароль: ",
+        "entry_name": "Имя: ",
+        "entry_username": "Имя пользователя / Email: ",
+        "entry_password": "Пароль: ",
+
+        # init
+        "password_mismatch": "Пароли не совпадают.",
+        "vault_created": "Хранилище успешно создано.",
+        "vault_exists": "Хранилище уже существует.",
+
+        # list
+        "no_entries": "Записи не найдены.",
+        "stored_entries": "Сохранённые записи:",
+
+        # add
+        "entry_saved": "Запись '{name}' сохранена.",
+        "entry_notes": "Заметки (необязательно): ",
+
+        # get
+        "entry_not_found": "Запись '{name}' не найдена.",
+        "password_copied": "Пароль скопирован в буфер обмена.",
+
+        # remove
+        "entry_removed": "Запись '{name}' удалена.",
+
+        # generator
+        "password_length_error": "Длина пароля должна быть не менее 8.",
+
+        # vault / storage errors
+        "vault_missing": "Хранилище не существует.",
+        "vault_corrupt": "Файл хранилища повреждён.",
+        "vault_decrypt_failed": "Не удалось расшифровать хранилище.",
+
+        # edits
+        "vault_updated": "Мастер-пароль обновлён.",
+
+        # argparse / help
+        "cmd_init": "Создать новое хранилище",
+        "cmd_list": "Показать список записей",
+        "cmd_add": "Добавить новую запись",
+        "cmd_get": "Показать запись",
+        "cmd_gen": "Сгенерировать безопасный пароль",
+        "cmd_rm": "Удалить запись",
+        "cmd_lang": "Установить язык",
+        "cmd_passwd": "Изменить мастер-пароль",
+
+        "arg_name": "Имя записи",
+        "arg_length": "Длина пароля (по умолчанию: 20)",
+        "arg_copy": "Скопировать пароль в буфер обмена",
+
+        # lang
+        "lang_set": "Язык установлен на {lang}",
+    },
 }
 
 def get_lang() -> str:

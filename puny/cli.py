@@ -65,7 +65,7 @@ def main():
     )
 
     lang_parser = subparsers.add_parser("lang", help="Set language")
-    lang_parser.add_argument("lang", choices=["en", "de"])
+    lang_parser.add_argument("lang", choices=["en", "de", "ru"])
 
     args = parser.parse_args()
 
