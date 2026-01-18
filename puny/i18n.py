@@ -41,6 +41,8 @@ STRINGS = {
         "vault_missing": "Vault does not exist.",
         "vault_corrupt": "Vault file is corrupted.",
         "vault_decrypt_failed": "Vault could not be decrypted.",
+        "entry_exists": "Entry '{name}' already exists.",
+
 
         # edits
         "vault_updated": "Master password updated.",

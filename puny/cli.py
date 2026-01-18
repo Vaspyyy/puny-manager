@@ -1,167 +1,121 @@
-
 import argparse
 import pyperclip
-
 from getpass import getpass
-
-from .vault import init_vault
-from .listing import list_entries
-from .adding import add_entry
-from .getting import get_entry
-from .generator import generate_password
-from .removing import remove_entry
-from .i18n import t
-from .passwd import change_master_password
+from .storage import load_vault, save_vault, init_vault, lang_path, config_dir
+from .vault import Entry, PunyError
+from .util import generate_password, smart_find
+from .i18n import t, get_lang
 from .version import get_version
 
-def ask_master_password() -> str:
-    return getpass(t("master_password"))
-
-
 def main():
-    parser = argparse.ArgumentParser(
-        prog="puny",
-        description="Puny Manager – a minimal password manager"
-    )
-
-    parser.add_argument(
+    p = argparse.ArgumentParser(prog="puny-manager")
+    p.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {get_version()}",
     )
 
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    sp = p.add_subparsers(dest="cmd", required=True)
 
-    subparsers.add_parser("init", help=t("cmd_init"))
-    subparsers.add_parser("list", help=t("cmd_list"))
-    subparsers.add_parser("add", help=t("cmd_add"))
-    subparsers.add_parser("passwd", help=t("cmd_passwd"))
+    sp.add_parser("init", help=t("cmd_init"))
+    sp.add_parser("list", help=t("cmd_list"))
+    sp.add_parser("add", help=t("cmd_add"))
+    sp.add_parser("passwd", help=t("cmd_passwd"))
 
-    get_parser = subparsers.add_parser("get", help=t("cmd_get"))
-    get_parser.add_argument("name", help=t("arg_name"))
-    get_parser.add_argument(
-            "--copy",
-            action="store_true",
-            help="Kopiert das Password in die Zwischenablage"
-    )
+    g = sp.add_parser("get", help=t("cmd_get"))
+    g.add_argument("name", help=t("arg_name"))
+    g.add_argument("--copy", action="store_true")
 
+    r = sp.add_parser("rm", help=t("cmd_rm"))
+    r.add_argument("name", help=t("arg_name"))
 
-    gen_parser = subparsers.add_parser("gen", help=t("cmd_gen"))
-    gen_parser.add_argument(
-            "length",
-            nargs="?", 
-            type=int,
-            default=20,
-            help=t("arg_length")
-    )
+    gen = sp.add_parser("gen", help=t("cmd_gen"))
+    gen.add_argument("length", nargs="?", type=int, default=20)
 
-    rm_parser = subparsers.add_parser(
-            "rm",
-            help="Entfernt einen Eintrag"
-    )
-    rm_parser.add_argument(
-            "name",
-            help="Name des Eintrags"
-    )
+    lang = sp.add_parser("lang", help=t("cmd_lang"))
+    lang.add_argument("lang", nargs="?", choices=["en", "de", "ru"])
 
-    lang_parser = subparsers.add_parser("lang", help="Set language")
-    lang_parser.add_argument("lang", choices=["en", "de", "ru"])
+    args = p.parse_args()
 
-    args = parser.parse_args()
+    try:
+        if args.cmd == "lang":
+            if args.lang is None:
+                print(get_lang())
+                return
+            config_dir().mkdir(parents=True, exist_ok=True)
+            lang_path().write_text(args.lang)
+            print(t("lang_set", lang=args.lang))
 
-    if args.command == "init":
-        pw1 = getpass(t("set_master_password"))
-        pw2 = getpass(t("repeat_master_password"))
-
-
-        if pw1 != pw2:
-            print(t("password_mismatch"))
-            return
-
-        try:
-            init_vault(pw1)
+        elif args.cmd == "init":
+            a = getpass(t("set_master_password"))
+            b = getpass(t("repeat_master_password"))
+            if a != b:
+                raise PunyError("password_mismatch")
+            init_vault(a)
             print(t("vault_created"))
-        except FileExistsError as e:
-            print(f"✗ Fehler: {e}")
 
-    elif args.command == "list":
-        master = ask_master_password()
-        try:
-            entries = list_entries(master)
-            if not entries:
+        elif args.cmd == "list":
+            v = load_vault(getpass(t("master_password")))
+            if not v.entries:
                 print(t("no_entries"))
             else:
                 print(t("stored_entries"))
-                for name in entries:
-                    print(f"- {name}")
-        except Exception as e:
-            print(f"✗ Fehler: {e}")
+                for n in v.list():
+                    print(f"- {n}")
 
-    elif args.command == "add":
-        master = ask_master_password()
+        elif args.cmd == "add":
+            m = getpass(t("master_password"))
+            v = load_vault(m)
+            e = Entry(
+                input(t("entry_name")).strip(),
+                input(t("entry_username")).strip(),
+                getpass(t("entry_password")),
+                input(t("entry_notes")).strip(),
+            )
+            v.add(e)
+            save_vault(m, v)
+            print(t("entry_saved", name=e.name))
 
-        name = input(t("entry_name")).strip()
-        username = input(t("entry_username")).strip()
-        password = getpass(t("entry_password"))
-        notes = input(t("entry_notes")).strip()
-
-        try:
-            add_entry(master, name, username, password, notes)
-            print(t("entry_saved", name=name))
-        except Exception as e:
-            print(f"{t('error_prefix')}{e}")
-
-
-    elif args.command == "get":
-        master = ask_master_password()
-        try:
-            entry = get_entry(master, args.name)
-            print(f"Name: {entry['name']}")
-            print(f"Username: {entry['username']}")
-
-            if entry.get("notes"):                ###############
-                print(f"Notes: {entry['notes']}") ###############
-
+        elif args.cmd == "get":
+            m = getpass(t("master_password"))
+            v = load_vault(m)
+            e = smart_find(v.entries, args.name)
+            if not e:
+                raise PunyError("entry_not_found")
+            print(f"Name: {e.name}")
+            print(f"Username: {e.username}")
+            if e.notes:
+                print(f"Notes: {e.notes}")
             if args.copy:
-                pyperclip.copy(entry["password"])
+                pyperclip.copy(e.password)
                 print(t("password_copied"))
             else:
-                print(f"Passwort: {entry['password']}")
-        except Exception as e:
-            print(f"✗ Fehler: {e}")
+                print(f"Password: {e.password}")
 
-    elif args.command == "gen":
-        try:
-            password = generate_password(args.length)
-            print(password)
-        except ValueError as e:
-            print(f"✗ Fehler: {e}")
-
-    elif args.command == "rm":
-        master = ask_master_password()
-        try:
-            remove_entry(master, args.name)
+        elif args.cmd == "rm":
+            m = getpass(t("master_password"))
+            v = load_vault(m)
+            v.remove(args.name)
+            save_vault(m, v)
             print(t("entry_removed", name=args.name))
-        except Exception as e:
-            print(f"✗ Fehler: {e}")
 
-    elif args.command == "lang":
-        from .paths import get_config_dir, get_lang_path
+        elif args.cmd == "gen":
+            print(generate_password(args.length))
 
-        cfg = get_config_dir()
-        cfg.mkdir(parents=True, exist_ok=True)
-        get_lang_path().write_text(args.lang)
-        print(t("lang_set", lang=args.lang))
-
-    elif args.command == "passwd":
-        try:
-            change_master_password()
+        elif args.cmd == "passwd":
+            old = getpass(t("master_password"))
+            v = load_vault(old)
+            a = getpass(t("set_master_password"))
+            b = getpass(t("repeat_master_password"))
+            if a != b:
+                raise PunyError("password_mismatch")
+            save_vault(a, v)
             print(t("vault_updated"))
-        except Exception as e:
-            print(f"{t('error_prefix')}{e}")
 
-
+    except PunyError as e:
+        print(t("error_prefix") + t(str(e)))
+    except Exception:
+        print(t("error_prefix") + t("vault_decrypt_failed"))
 
 if __name__ == "__main__":
     main()
-

@@ -1,20 +1,36 @@
+from dataclasses import dataclass, field
 
-from .paths import get_data_dir, get_vault_path
-from .storage import save_vault
-from .i18n import t
+class PunyError(Exception):
+    pass
 
-INITIAL_VAULT = {
-    "version": 1,
-    "entries": []
-}
+@dataclass
+class Entry:
+    name: str
+    username: str
+    password: str
+    notes: str = ""
 
-def init_vault(master_password: str) -> None:
-    data_dir = get_data_dir()
-    vault_path = get_vault_path()
+@dataclass
+class Vault:
+    version: int = 1
+    entries: list[Entry] = field(default_factory=list)
 
-    if vault_path.exists():
-        raise FileExistsError(t("vault_exists"))
+    def list(self) -> list[str]:
+        return [e.name for e in self.entries]
 
-    data_dir.mkdir(parents=True, exist_ok=True)
-    save_vault(master_password, INITIAL_VAULT)
+    def get(self, name: str) -> Entry:
+        for e in self.entries:
+            if e.name == name:
+                return e
+        raise PunyError("entry_not_found")
 
+    def add(self, entry: Entry) -> None:
+        if any(e.name == entry.name for e in self.entries):
+            raise PunyError("entry_exists")
+        self.entries.append(entry)
+
+    def remove(self, name: str) -> None:
+        before = len(self.entries)
+        self.entries = [e for e in self.entries if e.name != name]
+        if len(self.entries) == before:
+            raise PunyError("entry_not_found")

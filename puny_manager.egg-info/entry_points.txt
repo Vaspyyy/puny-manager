@@ -1,2 +1,0 @@
-[console_scripts]
-puny-manager = puny.cli:main
