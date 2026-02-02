@@ -12,16 +12,16 @@ def generate_password(length: int) -> str:
     return "".join(secrets.choice(ALPHABET) for _ in range(length))
 
 def check_master_password(password: str) -> str | None:
-    if len(password) < 12:
+    if len(password) < 4:
         return "master_password_too_short"
-    if not any(c.islower() for c in password):
-        return "master_password_requirements"
-    if not any(c.isupper() for c in password):
-        return "master_password_requirements"
-    if not any(c.isdigit() for c in password):
-        return "master_password_requirements"
-    if not any(c in string.punctuation for c in password):
-        return "master_password_requirements"
+#    if not any(c.islower() for c in password):
+#        return "master_password_requirements"
+#    if not any(c.isupper() for c in password):
+#        return "master_password_requirements"
+#    if not any(c.isdigit() for c in password):
+#        return "master_password_requirements"
+#    if not any(c in string.punctuation for c in password):
+#        return "master_password_requirements"
     return None
 
 def schedule_clipboard_clear(timeout_s: int) -> None:

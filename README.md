@@ -42,7 +42,7 @@ Initialize a new vault:
 ```bash
 puny-manager init
 ```
-Master passwords must be at least 12 characters and include upper, lower, digit, and symbol.
+Master passwords must be at least 4 characters and include upper, lower, digit, and symbol.
 
 Add a new entry:
 ```bash
