@@ -3,7 +3,7 @@ import pyperclip
 from getpass import getpass
 from .storage import load_vault, save_vault, init_vault, lang_path, config_dir
 from .vault import Entry, PunyError
-from .util import generate_password, smart_find
+from .util import generate_password, smart_find, check_master_password, schedule_clipboard_clear
 from .i18n import t, get_lang
 from .version import get_version
 
@@ -25,6 +25,7 @@ def main():
     g = sp.add_parser("get", help=t("cmd_get"))
     g.add_argument("name", help=t("arg_name"))
     g.add_argument("--copy", action="store_true")
+    g.add_argument("--timeout", type=int, default=15, help=t("arg_timeout"))
 
     r = sp.add_parser("rm", help=t("cmd_rm"))
     r.add_argument("name", help=t("arg_name"))
@@ -54,6 +55,9 @@ def main():
             b = getpass(t("repeat_master_password"))
             if a != b:
                 raise PunyError("password_mismatch")
+            master_error = check_master_password(a)
+            if master_error:
+                raise PunyError(master_error)
             init_vault(a)
             print(t("vault_created"))
 
@@ -74,6 +78,8 @@ def main():
                 input(t("entry_username")).strip(),
                 getpass(t("entry_password")),
                 input(t("entry_notes")).strip(),
+                input(t("entry_url")).strip(),
+                [t.strip() for t in input(t("entry_tags")).split(",") if t.strip()],
             )
             v.add(e)
             save_vault(m, v)
@@ -89,9 +95,16 @@ def main():
             print(f"Username: {e.username}")
             if e.notes:
                 print(f"Notes: {e.notes}")
+            if e.url:
+                print(f"URL: {e.url}")
+            if e.tags:
+                print(f"Tags: {', '.join(e.tags)}")
             if args.copy:
                 pyperclip.copy(e.password)
+                schedule_clipboard_clear(args.timeout)
                 print(t("password_copied"))
+                if args.timeout > 0:
+                    print(t("clipboard_clearing", seconds=args.timeout))
             else:
                 print(f"Password: {e.password}")
 
@@ -112,6 +125,9 @@ def main():
             b = getpass(t("repeat_master_password"))
             if a != b:
                 raise PunyError("password_mismatch")
+            master_error = check_master_password(a)
+            if master_error:
+                raise PunyError(master_error)
             save_vault(a, v)
             print(t("vault_updated"))
 
@@ -128,12 +144,19 @@ def main():
             username = input(f"{t('entry_username')} [{old.username}]: ").strip()
             password = getpass(f"{t('entry_password')} ({t('leave_empty')}): ")
             notes = input(f"{t('entry_notes')} [{old.notes}]: ").strip()
+            url = input(f"{t('entry_url')} [{old.url}]: ").strip()
+            tags_text = input(
+                f"{t('entry_tags')} [{', '.join(old.tags)}]: "
+            ).strip()
+            tags = [t.strip() for t in tags_text.split(",") if t.strip()]
 
             new = Entry(
-                    name=old.name,
-                    username=username or old.username,
-                    password=password or old.password,
-                    notes=notes or old.notes,
+                name=old.name,
+                username=username or old.username,
+                password=password or old.password,
+                notes=notes or old.notes,
+                url=url or old.url,
+                tags=tags or old.tags,
             )
             v.update(old.name, new)
             save_vault(m, v)

@@ -20,9 +20,13 @@ STRINGS = {
         "entry_name": "Name: ",
         "entry_username": "Username / Email: ",
         "entry_password": "Password: ",
+        "entry_url": "URL (optional): ",
+        "entry_tags": "Tags (comma-separated, optional): ",
 
         # init
         "password_mismatch": "Passwords do not match.",
+        "master_password_too_short": "Master password must be at least 4 characters.",
+#        "master_password_requirements": "Master password must include upper, lower, digit, and symbol.",
         "vault_created": "Vault created successfully.",
         "vault_exists": "Vault already exists.",
 
@@ -37,6 +41,7 @@ STRINGS = {
         # get
         "entry_not_found": "Entry '{name}' not found.",
         "password_copied": "Password copied to clipboard.",
+        "clipboard_clearing": "Clipboard will be cleared in {seconds} seconds.",
 
         # remove
         "entry_removed": "Entry '{name}' removed.",
@@ -71,6 +76,7 @@ STRINGS = {
         "arg_name": "Entry name",
         "arg_length": "Password length (default: 20)",
         "arg_copy": "Copy password to clipboard",
+        "arg_timeout": "Clipboard clear timeout in seconds (default: 15)",
 
         # lang
         "lang_set": "Language set to {lang}",
@@ -88,9 +94,13 @@ STRINGS = {
         "entry_name": "Name: ",
         "entry_username": "Benutzername / E-Mail: ",
         "entry_password": "Passwort: ",
+        "entry_url": "URL (optional): ",
+        "entry_tags": "Tags (kommagetrennt, optional): ",
 
         # init
         "password_mismatch": "Passwörter stimmen nicht überein.",
+        "master_password_too_short": "Master-Passwort muss mindestens 4 Zeichen haben.",
+#        "master_password_requirements": "Master-Passwort braucht Groß-/Kleinbuchstaben, Zahl und Symbol.",
         "vault_created": "Vault erfolgreich erstellt.",
         "vault_exists": "Vault existiert bereits.",
 
@@ -104,6 +114,7 @@ STRINGS = {
         # get
         "entry_not_found": "Eintrag '{name}' nicht gefunden.",
         "password_copied": "Passwort wurde in die Zwischenablage kopiert.",
+        "clipboard_clearing": "Zwischenablage wird in {seconds} Sekunden geleert.",
         "entry_notes": "Notizen (optional): ",
 
         # remove
@@ -139,6 +150,7 @@ STRINGS = {
         "arg_name": "Name des Eintrags",
         "arg_length": "Passwortlänge (Standard: 20)",
         "arg_copy": "Passwort in die Zwischenablage kopieren",
+        "arg_timeout": "Zwischenablage nach Sekunden leeren (Standard: 15)",
 
         # lang
         "lang_set": "Sprache gesetzt auf {lang}",
@@ -156,9 +168,13 @@ STRINGS = {
         "entry_name": "Имя: ",
         "entry_username": "Имя пользователя / Email: ",
         "entry_password": "Пароль: ",
+        "entry_url": "URL (необязательно): ",
+        "entry_tags": "Теги (через запятую, необязательно): ",
 
         # init
         "password_mismatch": "Пароли не совпадают.",
+        "master_password_too_short": "Мастер-пароль должен быть не менее 4 символов.",
+#        "master_password_requirements": "Мастер-пароль должен содержать регистр, цифру и символ.",
         "vault_created": "Хранилище успешно создано.",
         "vault_exists": "Хранилище уже существует.",
 
@@ -173,6 +189,7 @@ STRINGS = {
         # get
         "entry_not_found": "Запись '{name}' не найдена.",
         "password_copied": "Пароль скопирован в буфер обмена.",
+        "clipboard_clearing": "Буфер обмена будет очищен через {seconds} секунд.",
 
         # remove
         "entry_removed": "Запись '{name}' удалена.",
@@ -206,6 +223,7 @@ STRINGS = {
         "arg_name": "Имя записи",
         "arg_length": "Длина пароля (по умолчанию: 20)",
         "arg_copy": "Скопировать пароль в буфер обмена",
+        "arg_timeout": "Очистить буфер обмена через N секунд (по умолчанию: 15)",
 
         # lang
         "lang_set": "Язык установлен на {lang}",

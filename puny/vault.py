@@ -9,6 +9,8 @@ class Entry:
     username: str
     password: str
     notes: str = ""
+    url: str = ""
+    tags: list[str] = field(default_factory=list)
 
 @dataclass
 class Vault:

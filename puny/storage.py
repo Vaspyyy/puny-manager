@@ -1,7 +1,9 @@
 import json
 import os
+import shutil
+import tempfile
 from pathlib import Path
-from .crypto import generate_salt, derive_key, encrypt_data, decrypt_data
+from .crypto import generate_salt, derive_key, derive_key_legacy, encrypt_data, decrypt_data
 from .vault import Vault, Entry, PunyError
 
 APP_NAME = "puny-manager"
@@ -30,7 +32,11 @@ def load_vault(master_password: str) -> Vault:
         key = derive_key(master_password, salt)
         plaintext = decrypt_data(key, nonce, ciphertext)
     except Exception:
-        raise PunyError("vault_decrypt_failed")
+        try:
+            key = derive_key_legacy(master_password, salt)
+            plaintext = decrypt_data(key, nonce, ciphertext)
+        except Exception:
+            raise PunyError("vault_decrypt_failed")
 
     data = json.loads(plaintext.decode())
     entries = [Entry(**e) for e in data["entries"]]
@@ -52,8 +58,22 @@ def save_vault(master_password: str, vault: Vault) -> None:
 
     blob = salt + nonce + ciphertext
     path = vault_path()
-    path.write_bytes(blob)
-    path.chmod(0o600)
+    if path.exists():
+        backup = path.with_suffix(path.suffix + ".bak")
+        shutil.copy2(path, backup)
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(prefix=path.name, suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(blob)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(tmp_path, 0o600)
+        os.replace(tmp_path, path)
+    finally:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 def init_vault(master_password: str) -> None:
     path = vault_path()
@@ -67,4 +87,3 @@ def config_dir() -> Path:
 
 def lang_path() -> Path:
     return config_dir() / "lang"
-
