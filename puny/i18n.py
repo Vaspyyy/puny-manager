@@ -88,7 +88,7 @@ STRINGS = {
         "password_mismatch": "Passwörter stimmen nicht überein.",
         "master_password_too_short": "Master-Passwort muss mindestens 4 Zeichen haben.",
         "weak_master_password": "It is recommended to use at least 8 characters and include special characters.\n"
-        "Proceed anyway? (y/n): "
+        "Proceed anyway? (y/n): ",
         "vault_created": "Vault erfolgreich erstellt.",
         "vault_exists": "Vault existiert bereits.",
         # list
