@@ -18,14 +18,20 @@ Note: To use clipboard feature you need wl-clipboard (wayland) or xclip (x11)
 
 ## Installation
 
-Recommended method using pipx:
-
+Recommended method using the aur:
+```bash
+paru -S puny-manager
+``` 
+Using pipx:
 ```bash
 pipx install git+https://github.com/Vaspyyy/puny-manager.git
 ```
 
 ## Updating
-
+If installed via aur:
+```bash
+paru -Syu
+```
 If installed via pipx:
 
 ```bash
