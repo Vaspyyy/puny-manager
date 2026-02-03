@@ -8,7 +8,6 @@ def get_lang_path() -> Path:
     base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
     return base / APP_NAME / "lang"
 
-
 STRINGS = {
     "en": {
         # generic
@@ -40,6 +39,7 @@ STRINGS = {
         "entry_not_found": "Entry '{name}' not found.",
         "password_copied": "Password copied to clipboard.",
         "clipboard_clearing": "Clipboard will be cleared in {seconds} seconds.",
+        "clipboard_unavailable": "No clipboard tool found. Install wl-clipboard (Wayland) or xclip (X11).",
         # remove
         "entry_removed": "Entry '{name}' removed.",
         # generator
@@ -100,6 +100,7 @@ STRINGS = {
         "entry_not_found": "Eintrag '{name}' nicht gefunden.",
         "password_copied": "Passwort wurde in die Zwischenablage kopiert.",
         "clipboard_clearing": "Zwischenablage wird in {seconds} Sekunden geleert.",
+        "clipboard_unavailable": "No clipboard tool found. Install wl-clipboard (Wayland) or xclip (X11).",
         "entry_notes": "Notizen (optional): ",
         # remove
         "entry_removed": "Eintrag '{name}' entfernt.",
@@ -161,6 +162,7 @@ STRINGS = {
         "entry_not_found": "Запись '{name}' не найдена.",
         "password_copied": "Пароль скопирован в буфер обмена.",
         "clipboard_clearing": "Буфер обмена будет очищен через {seconds} секунд.",
+        "clipboard_unavailable": "No clipboard tool found. Install wl-clipboard (Wayland) or xclip (X11).",
         # remove
         "entry_removed": "Запись '{name}' удалена.",
         # generator

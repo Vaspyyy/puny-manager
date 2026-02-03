@@ -1,7 +1,7 @@
 import argparse
+import shutil
+import subprocess
 from getpass import getpass
-
-import pyperclip
 
 from .i18n import get_lang, t
 from .storage import config_dir, init_vault, lang_path, load_vault, save_vault
@@ -13,6 +13,29 @@ from .util import (
 )
 from .vault import Entry, PunyError
 from .version import get_version
+
+def copy_to_clipboard(text: str) -> bool:
+    if shutil.which("wl-copy"):
+        subprocess.run(
+            ["wl-copy"],
+            input=text,
+            text=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return True
+
+    if shutil.which("xclip"):
+        subprocess.run(
+            ["xclip", "-selection", "clipboard"],
+            input=text,
+            text=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return True
+
+    return False
 
 
 def main():
@@ -115,13 +138,16 @@ def main():
             if e.tags:
                 print(f"Tags: {', '.join(e.tags)}")
             if args.copy:
-                pyperclip.copy(e.password)
+                if not copy_to_clipboard(e.password):
+                    raise PunyError("clipboard_unavailable")
+
                 schedule_clipboard_clear(args.timeout)
                 print(t("password_copied"))
                 if args.timeout > 0:
                     print(t("clipboard_clearing", seconds=args.timeout))
             else:
                 print(f"Password: {e.password}")
+
 
         elif args.cmd == "rm":
             m = getpass(t("master_password"))
