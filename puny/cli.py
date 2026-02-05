@@ -65,7 +65,7 @@ def main():
     gen.add_argument("length", nargs="?", type=int, default=20)
 
     lang = sp.add_parser("lang", help=t("cmd_lang"))
-    lang.add_argument("lang", nargs="?", choices=["en", "de", "ru"])
+    lang.add_argument("lang", nargs="?", choices=["en", "de", "ru", "pt"])
 
     e = sp.add_parser("edit", help=t("cmd_edit"))
     e.add_argument("name", help=t("arg_name"))
