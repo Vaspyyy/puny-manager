@@ -17,6 +17,9 @@ dev = [
     "ruff>=0.15",
 ]
 
+[tool.setuptools.packages.find]
+include = ["puny*"]
+
 [project.scripts]
 puny-manager = "puny.cli:main"
 
