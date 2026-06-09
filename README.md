@@ -38,10 +38,36 @@ If installed via pipx:
 pipx upgrade puny-manager
 ```
 
-## Usage
-Change language:
+## Shell completions
+
+### Bash
 ```bash
-puny-manager lang
+cp completions/puny-manager.bash ~/.local/share/bash-completion/completions/puny-manager
+```
+Or source it directly:
+```bash
+source completions/puny-manager.bash
+```
+
+### Zsh
+```bash
+cp completions/_puny-manager ~/.local/share/zsh/site-functions/_puny-manager
+```
+Or add `completions/` to your `$fpath` in `.zshrc`:
+```zsh
+fpath=($(pwd)/completions $fpath)
+```
+
+### Fish
+```bash
+cp completions/puny-manager.fish ~/.config/fish/completions/puny-manager.fish
+```
+
+## Usage
+Change language (en, de, fr, es, ru, pt, zh):
+```bash
+puny-manager lang        # lists available languages
+puny-manager lang de     # switches to German
 ```
 
 Initialize a new vault:
@@ -60,13 +86,13 @@ List stored entries:
 ```bash
 puny-manager list
 ```
-Retrieve an entry:
+Retrieve an entry (password is copied to clipboard):
 ```bash
 puny-manager get <name>
 ```
-To copy a password and clear the clipboard after 15 seconds:
+Set clipboard clear timeout:
 ```bash
-puny-manager get <name> --copy --timeout 15
+puny-manager get <name> --timeout 30
 ```
 Generate a new password:
 ```bash

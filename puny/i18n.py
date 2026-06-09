@@ -1,61 +1,51 @@
 import os
 from pathlib import Path
 
-APP_NAME = "puny-manager"
+from .storage import APP_NAME
 
 
 def get_lang_path() -> Path:
-    base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    base = Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config")))
     return base / APP_NAME / "lang"
+
 
 STRINGS = {
     "en": {
-        # generic
         "error_prefix": "✗ Error: ",
-        "success_prefix": "✓ ",
-        # prompts
         "master_password": "Master password: ",
         "set_master_password": "Set master password: ",
         "repeat_master_password": "Repeat master password: ",
         "entry_name": "Name: ",
+        "entry_name_required": "Entry name must not be empty.",
         "entry_username": "Username / Email: ",
         "entry_password": "Password: ",
         "entry_url": "URL (optional): ",
         "entry_tags": "Tags (comma-separated, optional): ",
-        # init
         "password_mismatch": "Passwords do not match.",
         "master_password_too_short": "Master password must be at least 4 characters.",
         "vault_created": "Vault created successfully.",
         "weak_master_password": "It is recommended to use at least 8 characters and include special characters.\n"
         "Proceed anyway? (y/n): ",
         "vault_exists": "Vault already exists.",
-        # list
-        "no_entries": "No entries found.",
-        "stored_entries": "Stored entries:",
-        # add
-        "entry_saved": "Entry '{name}' saved.",
-        "entry_notes": "Notes (optional): ",
-        # get
-        "entry_not_found": "Entry '{name}' not found.",
-        "password_copied": "Password copied to clipboard.",
-        "clipboard_clearing": "Clipboard will be cleared in {seconds} seconds.",
-        "clipboard_unavailable": "No clipboard tool found. Install wl-clipboard (Wayland) or xclip (X11).",
-        # remove
-        "entry_removed": "Entry '{name}' removed.",
-        # generator
-        "password_length_error": "Password length must be at least 8.",
-        # vault / storage errors
         "vault_missing": "Vault does not exist.",
         "vault_corrupt": "Vault file is corrupted.",
         "vault_decrypt_failed": "Vault could not be decrypted.",
+        "no_entries": "No entries found.",
+        "stored_entries": "Stored entries:",
+        "entry_saved": "Entry '{name}' saved.",
+        "entry_notes": "Notes (optional): ",
+        "entry_not_found": "Entry '{name}' not found.",
+        "password_copied": "Password copied to clipboard.",
+        "password_length_error": "Password length must be at least 8.",
+        "clipboard_clearing": "Clipboard will be cleared in {seconds} seconds.",
+        "clipboard_unavailable": "No clipboard tool found. Install wl-clipboard (Wayland) or xclip (X11).",
+        "entry_removed": "Entry '{name}' removed.",
         "entry_exists": "Entry '{name}' already exists.",
-        # edits
         "vault_updated": "Master password updated.",
         "cmd_edit": "Edit an entry",
         "editing_entry": "Editing entry:",
         "entry_updated": "Entry '{name}' updated.",
         "leave_empty": "leave empty to keep",
-        # argparse / help
         "cmd_init": "Initialize a new vault",
         "cmd_list": "List entries",
         "cmd_add": "Add a new entry",
@@ -68,55 +58,47 @@ STRINGS = {
         "arg_length": "Password length (default: 20)",
         "arg_copy": "Copy password to clipboard",
         "arg_timeout": "Clipboard clear timeout in seconds (default: 15)",
-        # lang
         "lang_set": "Language set to {lang}",
+        "unsupported_version": "Unsupported vault version {version}.",
+        "current_language": "Current language",
+        "available_languages": "Available languages",
     },
     "de": {
-        # generic
         "error_prefix": "✗ Fehler: ",
-        "success_prefix": "✓ ",
-        # prompts
         "master_password": "Master-Passwort: ",
         "set_master_password": "Master-Passwort festlegen: ",
         "repeat_master_password": "Master-Passwort wiederholen: ",
         "entry_name": "Name: ",
+        "entry_name_required": "Eintragsname darf nicht leer sein.",
         "entry_username": "Benutzername / E-Mail: ",
         "entry_password": "Passwort: ",
         "entry_url": "URL (optional): ",
         "entry_tags": "Tags (kommagetrennt, optional): ",
-        # init
         "password_mismatch": "Passwörter stimmen nicht überein.",
         "master_password_too_short": "Master-Passwort muss mindestens 4 Zeichen haben.",
-        "weak_master_password": "It is recommended to use at least 8 characters and include special characters.\n"
-        "Proceed anyway? (y/n): ",
         "vault_created": "Vault erfolgreich erstellt.",
+        "weak_master_password": "Mindestens 8 Zeichen und Sonderzeichen werden empfohlen.\n"
+        "Trotzdem fortfahren? (y/n): ",
         "vault_exists": "Vault existiert bereits.",
-        # list
-        "no_entries": "Keine Einträge vorhanden.",
-        "stored_entries": "Gespeicherte Einträge:",
-        # add
-        "entry_saved": "Eintrag '{name}' gespeichert.",
-        # get
-        "entry_not_found": "Eintrag '{name}' nicht gefunden.",
-        "password_copied": "Passwort wurde in die Zwischenablage kopiert.",
-        "clipboard_clearing": "Zwischenablage wird in {seconds} Sekunden geleert.",
-        "clipboard_unavailable": "No clipboard tool found. Install wl-clipboard (Wayland) or xclip (X11).",
-        "entry_notes": "Notizen (optional): ",
-        # remove
-        "entry_removed": "Eintrag '{name}' entfernt.",
-        # generator
-        "password_length_error": "Passwortlänge muss mindestens 8 sein.",
-        # vault / storage errors
         "vault_missing": "Vault existiert nicht.",
         "vault_corrupt": "Vault-Datei ist beschädigt.",
         "vault_decrypt_failed": "Vault konnte nicht entschlüsselt werden.",
-        # edits
+        "no_entries": "Keine Einträge vorhanden.",
+        "stored_entries": "Gespeicherte Einträge:",
+        "entry_saved": "Eintrag '{name}' gespeichert.",
+        "entry_notes": "Notizen (optional): ",
+        "entry_not_found": "Eintrag '{name}' nicht gefunden.",
+        "password_copied": "Passwort wurde in die Zwischenablage kopiert.",
+        "password_length_error": "Passwortlänge muss mindestens 8 sein.",
+        "clipboard_clearing": "Zwischenablage wird in {seconds} Sekunden geleert.",
+        "clipboard_unavailable": "Kein Clipboard-Tool gefunden. Installiere wl-clipboard (Wayland) oder xclip (X11).",
+        "entry_removed": "Eintrag '{name}' entfernt.",
+        "entry_exists": "Eintrag '{name}' existiert bereits.",
         "vault_updated": "Master-Passwort aktualisiert.",
         "cmd_edit": "Eintrag bearbeiten",
         "editing_entry": "Bearbeite Eintrag:",
         "entry_updated": "Eintrag '{name}' aktualisiert.",
         "leave_empty": "leer lassen zum Behalten",
-        # argparse / help
         "cmd_init": "Neue Vault erstellen",
         "cmd_list": "Einträge auflisten",
         "cmd_add": "Eintrag hinzufügen",
@@ -129,55 +111,153 @@ STRINGS = {
         "arg_length": "Passwortlänge (Standard: 20)",
         "arg_copy": "Passwort in die Zwischenablage kopieren",
         "arg_timeout": "Zwischenablage nach Sekunden leeren (Standard: 15)",
-        # lang
         "lang_set": "Sprache gesetzt auf {lang}",
+        "unsupported_version": "Nicht unterstützte Vault-Version {version}.",
+        "current_language": "Aktuelle Sprache",
+        "available_languages": "Verfügbare Sprachen",
+    },
+    "fr": {
+        "error_prefix": "✗ Erreur : ",
+        "master_password": "Mot de passe maître : ",
+        "set_master_password": "Définir le mot de passe maître : ",
+        "repeat_master_password": "Répéter le mot de passe maître : ",
+        "entry_name": "Nom : ",
+        "entry_name_required": "Le nom de l'entrée ne peut pas être vide.",
+        "entry_username": "Nom d'utilisateur / Email : ",
+        "entry_password": "Mot de passe : ",
+        "entry_url": "URL (optionnel) : ",
+        "entry_tags": "Étiquettes (séparées par des virgules, optionnel) : ",
+        "password_mismatch": "Les mots de passe ne correspondent pas.",
+        "master_password_too_short": "Le mot de passe maître doit avoir au moins 4 caractères.",
+        "vault_created": "Coffre créé avec succès.",
+        "weak_master_password": "Il est recommandé d'utiliser au moins 8 caractères et d'inclure des caractères spéciaux.\n"
+        "Continuer quand même ? (o/n) : ",
+        "vault_exists": "Le coffre existe déjà.",
+        "vault_missing": "Le coffre n'existe pas.",
+        "vault_corrupt": "Le fichier du coffre est corrompu.",
+        "vault_decrypt_failed": "Le coffre n'a pas pu être déchiffré.",
+        "no_entries": "Aucune entrée trouvée.",
+        "stored_entries": "Entrées stockées :",
+        "entry_saved": "Entrée '{name}' enregistrée.",
+        "entry_notes": "Notes (optionnel) : ",
+        "entry_not_found": "Entrée '{name}' introuvable.",
+        "password_copied": "Mot de passe copié dans le presse-papiers.",
+        "password_length_error": "La longueur du mot de passe doit être d'au moins 8.",
+        "clipboard_clearing": "Le presse-papiers sera effacé dans {seconds} secondes.",
+        "clipboard_unavailable": "Aucun outil de presse-papiers trouvé. Installez wl-clipboard (Wayland) ou xclip (X11).",
+        "entry_removed": "Entrée '{name}' supprimée.",
+        "entry_exists": "L'entrée '{name}' existe déjà.",
+        "vault_updated": "Mot de passe maître mis à jour.",
+        "cmd_edit": "Modifier une entrée",
+        "editing_entry": "Modification de l'entrée :",
+        "entry_updated": "Entrée '{name}' mise à jour.",
+        "leave_empty": "laisser vide pour conserver",
+        "cmd_init": "Initialiser un nouveau coffre",
+        "cmd_list": "Lister les entrées",
+        "cmd_add": "Ajouter une nouvelle entrée",
+        "cmd_get": "Afficher une entrée",
+        "cmd_gen": "Générer un mot de passe sécurisé",
+        "cmd_rm": "Supprimer une entrée",
+        "cmd_lang": "Changer la langue",
+        "cmd_passwd": "Changer le mot de passe maître",
+        "arg_name": "Nom de l'entrée",
+        "arg_length": "Longueur du mot de passe (défaut : 20)",
+        "arg_copy": "Copier le mot de passe dans le presse-papiers",
+        "arg_timeout": "Délai d'effacement du presse-papiers (défaut : 15)",
+        "lang_set": "Langue définie sur {lang}",
+        "unsupported_version": "Version de coffre non prise en charge {version}.",
+        "current_language": "Langue actuelle",
+        "available_languages": "Langues disponibles",
+    },
+    "es": {
+        "error_prefix": "✗ Error: ",
+        "master_password": "Contraseña maestra: ",
+        "set_master_password": "Establecer contraseña maestra: ",
+        "repeat_master_password": "Repetir contraseña maestra: ",
+        "entry_name": "Nombre: ",
+        "entry_name_required": "El nombre de la entrada no puede estar vacío.",
+        "entry_username": "Usuario / Email: ",
+        "entry_password": "Contraseña: ",
+        "entry_url": "URL (opcional): ",
+        "entry_tags": "Etiquetas (separadas por comas, opcional): ",
+        "password_mismatch": "Las contraseñas no coinciden.",
+        "master_password_too_short": "La contraseña maestra debe tener al menos 4 caracteres.",
+        "vault_created": "Cofre creado con éxito.",
+        "weak_master_password": "Se recomienda usar al menos 8 caracteres e incluir caracteres especiales.\n"
+        "¿Continuar de todos modos? (s/n): ",
+        "vault_exists": "El cofre ya existe.",
+        "vault_missing": "El cofre no existe.",
+        "vault_corrupt": "El archivo del cofre está dañado.",
+        "vault_decrypt_failed": "No se pudo descifrar el cofre.",
+        "no_entries": "No se encontraron entradas.",
+        "stored_entries": "Entradas almacenadas:",
+        "entry_saved": "Entrada '{name}' guardada.",
+        "entry_notes": "Notas (opcional): ",
+        "entry_not_found": "Entrada '{name}' no encontrada.",
+        "password_copied": "Contraseña copiada al portapapeles.",
+        "password_length_error": "La longitud de la contraseña debe ser al menos 8.",
+        "clipboard_clearing": "El portapapeles se limpiará en {seconds} segundos.",
+        "clipboard_unavailable": "No se encontró herramienta de portapapeles. Instale wl-clipboard (Wayland) o xclip (X11).",
+        "entry_removed": "Entrada '{name}' eliminada.",
+        "entry_exists": "La entrada '{name}' ya existe.",
+        "vault_updated": "Contraseña maestra actualizada.",
+        "cmd_edit": "Editar una entrada",
+        "editing_entry": "Editando entrada:",
+        "entry_updated": "Entrada '{name}' actualizada.",
+        "leave_empty": "dejar vacío para mantener",
+        "cmd_init": "Inicializar un nuevo cofre",
+        "cmd_list": "Listar entradas",
+        "cmd_add": "Agregar una nueva entrada",
+        "cmd_get": "Mostrar una entrada",
+        "cmd_gen": "Generar una contraseña segura",
+        "cmd_rm": "Eliminar una entrada",
+        "cmd_lang": "Cambiar idioma",
+        "cmd_passwd": "Cambiar contraseña maestra",
+        "arg_name": "Nombre de la entrada",
+        "arg_length": "Longitud de la contraseña (predeterminado: 20)",
+        "arg_copy": "Copiar contraseña al portapapeles",
+        "arg_timeout": "Tiempo de limpieza del portapapeles (predeterminado: 15)",
+        "lang_set": "Idioma establecido a {lang}",
+        "unsupported_version": "Versión de cofre no soportada {version}.",
+        "current_language": "Idioma actual",
+        "available_languages": "Idiomas disponibles",
     },
     "ru": {
-        # generic
         "error_prefix": "✗ Ошибка: ",
-        "success_prefix": "✓ ",
-        # prompts
         "master_password": "Мастер-пароль: ",
         "set_master_password": "Установить мастер-пароль: ",
         "repeat_master_password": "Повторите мастер-пароль: ",
         "entry_name": "Имя: ",
+        "entry_name_required": "Имя записи не может быть пустым.",
         "entry_username": "Имя пользователя / Email: ",
         "entry_password": "Пароль: ",
         "entry_url": "URL (необязательно): ",
         "entry_tags": "Теги (через запятую, необязательно): ",
-        # init
         "password_mismatch": "Пароли не совпадают.",
         "master_password_too_short": "Мастер-пароль должен быть не менее 4 символов.",
-        "weak_master_password": "It is recommended to use at least 8 characters and include special characters.\n"
-        "Proceed anyway? (y/n): ",
         "vault_created": "Хранилище успешно создано.",
+        "weak_master_password": "Рекомендуется использовать не менее 8 символов и спецсимволы.\n"
+        "Всё равно продолжить? (y/n): ",
         "vault_exists": "Хранилище уже существует.",
-        # list
-        "no_entries": "Записи не найдены.",
-        "stored_entries": "Сохранённые записи:",
-        # add
-        "entry_saved": "Запись '{name}' сохранена.",
-        "entry_notes": "Заметки (необязательно): ",
-        # get
-        "entry_not_found": "Запись '{name}' не найдена.",
-        "password_copied": "Пароль скопирован в буфер обмена.",
-        "clipboard_clearing": "Буфер обмена будет очищен через {seconds} секунд.",
-        "clipboard_unavailable": "No clipboard tool found. Install wl-clipboard (Wayland) or xclip (X11).",
-        # remove
-        "entry_removed": "Запись '{name}' удалена.",
-        # generator
-        "password_length_error": "Длина пароля должна быть не менее 8.",
-        # vault / storage errors
         "vault_missing": "Хранилище не существует.",
         "vault_corrupt": "Файл хранилища повреждён.",
         "vault_decrypt_failed": "Не удалось расшифровать хранилище.",
-        # edits
+        "no_entries": "Записи не найдены.",
+        "stored_entries": "Сохранённые записи:",
+        "entry_saved": "Запись '{name}' сохранена.",
+        "entry_notes": "Заметки (необязательно): ",
+        "entry_not_found": "Запись '{name}' не найдена.",
+        "password_copied": "Пароль скопирован в буфер обмена.",
+        "password_length_error": "Длина пароля должна быть не менее 8.",
+        "clipboard_clearing": "Буфер обмена будет очищен через {seconds} секунд.",
+        "clipboard_unavailable": "Буфер обмена не найден. Установите wl-clipboard (Wayland) или xclip (X11).",
+        "entry_removed": "Запись '{name}' удалена.",
+        "entry_exists": "Запись '{name}' уже существует.",
         "vault_updated": "Мастер-пароль обновлён.",
         "cmd_edit": "Редактировать запись",
         "editing_entry": "Редактирование записи:",
         "entry_updated": "Запись '{name}' обновлена.",
         "leave_empty": "оставьте пустым, чтобы сохранить",
-        # argparse / help
         "cmd_init": "Создать новое хранилище",
         "cmd_list": "Показать список записей",
         "cmd_add": "Добавить новую запись",
@@ -190,56 +270,47 @@ STRINGS = {
         "arg_length": "Длина пароля (по умолчанию: 20)",
         "arg_copy": "Скопировать пароль в буфер обмена",
         "arg_timeout": "Очистить буфер обмена через N секунд (по умолчанию: 15)",
-        # lang
         "lang_set": "Язык установлен на {lang}",
+        "unsupported_version": "Неподдерживаемая версия хранилища {version}.",
+        "current_language": "Текущий язык",
+        "available_languages": "Доступные языки",
     },
     "pt": {
-        # generic
         "error_prefix": "✗ Erro: ",
-        "success_prefix": "✓ ",
-        # prompts
         "master_password": "Senha mestre: ",
         "set_master_password": "Definir senha mestre: ",
         "repeat_master_password": "Repetir senha mestre: ",
         "entry_name": "Nome: ",
+        "entry_name_required": "O nome da entrada não pode estar vazio.",
         "entry_username": "Usuário / Email: ",
         "entry_password": "Senha: ",
         "entry_url": "URL (opcional): ",
         "entry_tags": "Identificadores (separado por vírgulas, opcional): ",
-        # init
         "password_mismatch": "Senhas não combinam.",
         "master_password_too_short": "Senha mestre deve ter pelo menos 4 caracteres.",
         "vault_created": "Cofre criado com sucesso.",
         "weak_master_password": "É recomendado usar pelo menos 8 caracteres e usar caracteres especiais.\n"
-        "Continuar mesmo assim? (y/n): ", # Proceed anyway?
+        "Continuar mesmo assim? (y/n): ",
         "vault_exists": "Cofre já existe.",
-        # list
+        "vault_missing": "Cofre não existe.",
+        "vault_corrupt": "Arquivo de cofre está corrompido.",
+        "vault_decrypt_failed": "Cofre não pôde ser aberto.",
         "no_entries": "Nenhuma entrada encontrada.",
         "stored_entries": "Entradas guardadas:",
-        # add
         "entry_saved": "Entrada '{name}' salva.",
         "entry_notes": "Notas (opcional): ",
-        # get
         "entry_not_found": "Entrada '{name}' não encontrada.",
         "password_copied": "Senha copiada para área de transferência.",
+        "password_length_error": "Largura da senha deve ser de pelo menos 8 caracteres.",
         "clipboard_clearing": "Área de transferência será limpa em {seconds} segundos.",
         "clipboard_unavailable": "Nenhuma área de transferência encontrada. Instale wl-clipboard (Wayland) ou xclip (X11).",
-        # remove
         "entry_removed": "Entrada '{name}' removida.",
-        # generator
-        "password_length_error": "Largura da senha deve ser de pelo menos 8 caracteres.",
-        # vault / storage errors
-        "vault_missing": "Cofre não existe.",
-        "vault_corrupt": "Ih caralho, arquivo de cofre está corrompido.",
-        "vault_decrypt_failed": "PORRA!!! Cofre não pode ser aberto.",
         "entry_exists": "Entrada '{name}' já existe.",
-        # edits
         "vault_updated": "Senha mestre atualizada.",
         "cmd_edit": "Editar uma entrada",
         "editing_entry": "Editando entrada:",
         "entry_updated": "Entrada '{name}' atualizada.",
         "leave_empty": "deixe vazio para reter",
-        # argparse / help
         "cmd_init": "Iniciar novo cofre",
         "cmd_list": "Listar entradas",
         "cmd_add": "Adicionar nova entrada",
@@ -252,20 +323,76 @@ STRINGS = {
         "arg_length": "Largura da senha (predefinição: 20)",
         "arg_copy": "Copiar para área de transferência",
         "arg_timeout": "Tempo de limpeza de área de transferência (predefinição: 15)",
-        # lang
         "lang_set": "Língua definida para {lang}",
+        "unsupported_version": "Versão de cofre não suportada {version}.",
+        "current_language": "Língua atual",
+        "available_languages": "Línguas disponíveis",
+    },
+    "zh": {
+        "error_prefix": "✗ 错误: ",
+        "master_password": "主密码: ",
+        "set_master_password": "设置主密码: ",
+        "repeat_master_password": "重复主密码: ",
+        "entry_name": "名称: ",
+        "entry_name_required": "条目名称不能为空。",
+        "entry_username": "用户名 / 邮箱: ",
+        "entry_password": "密码: ",
+        "entry_url": "网址 (可选): ",
+        "entry_tags": "标签 (逗号分隔，可选): ",
+        "password_mismatch": "密码不匹配。",
+        "master_password_too_short": "主密码至少需要4个字符。",
+        "vault_created": "密码库创建成功。",
+        "weak_master_password": "建议使用至少8个字符并包含特殊字符。\n"
+        "仍然继续？(y/n): ",
+        "vault_exists": "密码库已存在。",
+        "vault_missing": "密码库不存在。",
+        "vault_corrupt": "密码库文件已损坏。",
+        "vault_decrypt_failed": "无法解密密码库。",
+        "no_entries": "未找到条目。",
+        "stored_entries": "已存储的条目:",
+        "entry_saved": "条目 '{name}' 已保存。",
+        "entry_notes": "备注 (可选): ",
+        "entry_not_found": "未找到条目 '{name}'。",
+        "password_copied": "密码已复制到剪贴板。",
+        "password_length_error": "密码长度必须至少为8。",
+        "clipboard_clearing": "剪贴板将在 {seconds} 秒后清除。",
+        "clipboard_unavailable": "未找到剪贴板工具。请安装 wl-clipboard (Wayland) 或 xclip (X11)。",
+        "entry_removed": "条目 '{name}' 已删除。",
+        "entry_exists": "条目 '{name}' 已存在。",
+        "vault_updated": "主密码已更新。",
+        "cmd_edit": "编辑条目",
+        "editing_entry": "正在编辑条目:",
+        "entry_updated": "条目 '{name}' 已更新。",
+        "leave_empty": "留空以保留",
+        "cmd_init": "初始化新密码库",
+        "cmd_list": "列出条目",
+        "cmd_add": "添加新条目",
+        "cmd_get": "显示条目",
+        "cmd_gen": "生成安全密码",
+        "cmd_rm": "删除条目",
+        "cmd_lang": "设置语言",
+        "cmd_passwd": "更改主密码",
+        "arg_name": "条目名称",
+        "arg_length": "密码长度 (默认: 20)",
+        "arg_copy": "复制密码到剪贴板",
+        "arg_timeout": "剪贴板清除超时秒数 (默认: 15)",
+        "lang_set": "语言已设置为 {lang}",
+        "unsupported_version": "不支持的密码库版本 {version}。",
+        "current_language": "当前语言",
+        "available_languages": "可用语言",
     },
 }
 
 
 def get_lang() -> str:
     try:
-        return get_lang_path().read_text().strip()
+        lang = get_lang_path().read_text().strip()
+        return lang if lang in STRINGS else "en"
     except FileNotFoundError:
         return "en"
 
 
-def t(key: str, **kwargs) -> str:
+def t(key: str, **kwargs: object) -> str:
     lang = get_lang()
     if key not in STRINGS.get(lang, {}):
         raise KeyError(f"Missing i18n key: {key}")

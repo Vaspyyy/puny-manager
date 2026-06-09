@@ -1,19 +1,41 @@
+import contextlib
 import json
 import os
 import shutil
 import tempfile
 from pathlib import Path
-from .crypto import generate_salt, derive_key, derive_key_legacy, encrypt_data, decrypt_data
-from .vault import Vault, Entry, PunyError
+
+from .crypto import decrypt_data, derive_key, derive_key_legacy, encrypt_data, generate_salt
+from .vault import Entry, PunyError, Vault
 
 APP_NAME = "puny-manager"
 
+
+def _xdg_data() -> Path:
+    base = os.environ.get("XDG_DATA_HOME", str(Path.home() / ".local/share"))
+    return Path(base)
+
+
+def _xdg_config() -> Path:
+    base = os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config"))
+    return Path(base)
+
+
 def data_dir() -> Path:
-    base = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share"))
-    return base / APP_NAME
+    return _xdg_data() / APP_NAME
+
 
 def vault_path() -> Path:
     return data_dir() / "vault.puny"
+
+
+def config_dir() -> Path:
+    return _xdg_config() / APP_NAME
+
+
+def lang_path() -> Path:
+    return config_dir() / "lang"
+
 
 def load_vault(master_password: str) -> Vault:
     path = vault_path()
@@ -35,12 +57,17 @@ def load_vault(master_password: str) -> Vault:
         try:
             key = derive_key_legacy(master_password, salt)
             plaintext = decrypt_data(key, nonce, ciphertext)
+            data = json.loads(plaintext.decode())
+            entries = [Entry(**e) for e in data["entries"]]
+            vault = Vault(version=data["version"], entries=entries)
+            save_vault(master_password, vault)
         except Exception:
-            raise PunyError("vault_decrypt_failed")
+            raise PunyError("vault_decrypt_failed") from None
 
     data = json.loads(plaintext.decode())
     entries = [Entry(**e) for e in data["entries"]]
     return Vault(version=data["version"], entries=entries)
+
 
 def save_vault(master_password: str, vault: Vault) -> None:
     data_dir().mkdir(parents=True, exist_ok=True)
@@ -72,8 +99,9 @@ def save_vault(master_password: str, vault: Vault) -> None:
         os.chmod(tmp_path, 0o600)
         os.replace(tmp_path, path)
     finally:
-        if os.path.exists(tmp_path):
+        with contextlib.suppress(OSError):
             os.unlink(tmp_path)
+
 
 def init_vault(master_password: str) -> None:
     path = vault_path()
@@ -81,9 +109,8 @@ def init_vault(master_password: str) -> None:
         raise PunyError("vault_exists")
     save_vault(master_password, Vault())
 
-def config_dir() -> Path:
-    base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return base / APP_NAME
 
-def lang_path() -> Path:
-    return config_dir() / "lang"
+def remove_backup() -> None:
+    backup = vault_path().with_suffix(vault_path().suffix + ".bak")
+    with contextlib.suppress(OSError):
+        os.unlink(backup)

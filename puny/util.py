@@ -3,8 +3,16 @@ import shutil
 import string
 import subprocess
 import sys
+from typing import TypeVar
 
-ALPHABET = string.ascii_letters + string.digits + string.punctuation
+from .vault import Entry
+
+E = TypeVar("E", bound=Entry)
+
+SYMBOLS = "!@#$%^&*()-_=+[]{};:,.<>?"
+ALPHABET = string.ascii_letters + string.digits + SYMBOLS
+
+_clipboard_clear_processes: list[subprocess.Popen[bytes]] = []
 
 
 def generate_password(length: int) -> str:
@@ -19,7 +27,7 @@ def check_master_password(password: str) -> tuple[str | None, str | None]:
     warnings = []
     if len(password) < 8:
         warnings.append("short")
-    if not any(c in string.punctuation for c in password):
+    if not any(c in SYMBOLS for c in password):
         warnings.append("no_symbol")
     if warnings:
         return None, "weak_master_password"
@@ -35,22 +43,32 @@ def schedule_clipboard_clear(timeout_s: int) -> None:
         clear_cmd = ["xclip", "-selection", "clipboard"]
     else:
         return
-    subprocess.Popen(
+
+    for proc in _clipboard_clear_processes:
+        proc.kill()
+    _clipboard_clear_processes.clear()
+
+    proc = subprocess.Popen(
         [
             sys.executable,
             "-c",
             (
                 "import time, subprocess;"
                 f"time.sleep({timeout_s});"
-                f"subprocess.run({clear_cmd!r}, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)"
+                f"subprocess.run({clear_cmd!r},"
+                " stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)"
             ),
         ],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
+    _clipboard_clear_processes.append(proc)
 
 
-def smart_find(entries, query):
+def smart_find(entries: list[E], query: str) -> E | None:
+    if not query:
+        return None
+
     exact = [e for e in entries if e.name == query]
     if exact:
         return exact[0]
@@ -59,7 +77,10 @@ def smart_find(entries, query):
         e
         for e in entries
         if query.lower()
-        in (e.name + e.notes + e.username + e.url + " ".join(e.tags)).lower()
+        in (
+            e.name + "\x00" + e.username + "\x00" + e.notes
+            + "\x00" + e.url + "\x00" + " ".join(e.tags)
+        ).lower()
     ]
     if not matches:
         return None
@@ -77,5 +98,6 @@ def smart_find(entries, query):
             for e in matches:
                 if e.name == p.stdout.strip():
                     return e
+        return None
 
     return matches[0]

@@ -1,0 +1,46 @@
+#compdef puny-manager
+# Install to a directory in $fpath, e.g.:
+#   cp completions/_puny-manager ~/.local/share/zsh/site-functions/_puny-manager
+
+_puny_manager() {
+    local context state state_descr line
+    typeset -A opt_args
+
+    _arguments -C \
+        '--version[Show version]' \
+        '--help[Show help]' \
+        '1:subcommand:->subcmd' \
+        '*::args:->args' && return
+
+    case "$state" in
+        subcmd)
+            local -a cmds
+            cmds=(
+                'init:Initialize a new vault'
+                'list:List entries'
+                'add:Add a new entry'
+                'get:Show an entry'
+                'rm:Remove an entry'
+                'gen:Generate a secure password'
+                'passwd:Change master password'
+                'edit:Edit an entry'
+                'lang:Set language'
+            )
+            _describe -t commands 'subcommand' cmds
+            ;;
+        args)
+            case "$words[1]" in
+                get)
+                    _arguments \
+                        '--timeout[Clipboard clear timeout]:seconds:' \
+                        '--help[Show help]'
+                    ;;
+                lang)
+                    _values 'language' en de fr es ru pt zh
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+_puny_manager "$@"

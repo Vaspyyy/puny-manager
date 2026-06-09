@@ -4,13 +4,36 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "puny-manager"
-version = "1.5.7"
+version = "1.6.0"
 description = "Puny Manager – minimal password manager"
 requires-python = ">=3.10"
 dependencies = [
     "cryptography",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0",
+    "ruff>=0.15",
+]
+
 [project.scripts]
 puny-manager = "puny.cli:main"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "SIM", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["puny"]
+
+[tool.ruff.lint.per-file-ignores]
+"puny/i18n.py" = ["E501"]
+"puny/version.py" = ["I"]
+
+[tool.ruff.format]
+quote-style = "double"
 

@@ -1,0 +1,9 @@
+{
+  "include": ["puny"],
+  "exclude": ["tests", "build", "dist", "*.egg-info"],
+  "pythonVersion": "3.10",
+  "typeCheckingMode": "basic",
+  "reportMissingTypeStubs": false,
+  "reportUnusedImport": true,
+  "reportUnusedVariable": true
+}
