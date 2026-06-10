@@ -233,7 +233,10 @@ def cmd_stats(args: argparse.Namespace) -> None:
 def cmd_gen(args: argparse.Namespace) -> None:
     if args.length < 8:
         raise PunyError("password_length_error")
-    print(generate_password(args.length))
+    pw = generate_password(args.length)
+    if not copy_to_clipboard(pw):
+        raise PunyError("clipboard_unavailable")
+    print(t("password_generated", length=args.length))
 
 
 def cmd_passwd(args: argparse.Namespace) -> None:
