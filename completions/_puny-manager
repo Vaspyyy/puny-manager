@@ -50,6 +50,11 @@ _puny_manager() {
                         '--timeout[Clipboard clear timeout]:seconds:' \
                         '--help[Show help]'
                     ;;
+                create)
+                    _arguments \
+                        '--level[Encryption level]:level:(fast balanced paranoid)' \
+                        '--help[Show help]'
+                    ;;
                 lang)
                     _values 'language' en de fr es ru pt zh
                     ;;

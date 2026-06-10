@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 
+from .crypto import KDF_ARGON2ID, LEVEL_BALANCED
+
 SUPPORTED_VERSIONS = {1}
 
 
@@ -29,6 +31,8 @@ class Vault:
     version: int = 1
     entries: list[Entry] = field(default_factory=list)
     name: str | None = field(default=None, repr=False)
+    kdf_id: int = field(default=KDF_ARGON2ID, repr=False)
+    level_id: int = field(default=LEVEL_BALANCED, repr=False)
 
     def __post_init__(self) -> None:
         if self.version not in SUPPORTED_VERSIONS:

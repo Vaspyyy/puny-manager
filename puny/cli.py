@@ -3,6 +3,7 @@ import shutil
 import subprocess
 from getpass import getpass
 
+from .crypto import LEVEL_BALANCED, LEVEL_FAST, LEVEL_PARANOID
 from .i18n import STRINGS, get_lang, t
 from .storage import (
     config_dir,
@@ -71,6 +72,8 @@ def cmd_lang(args: argparse.Namespace) -> None:
 
 
 def cmd_create(args: argparse.Namespace) -> None:
+    level_map = {"fast": LEVEL_FAST, "balanced": LEVEL_BALANCED, "paranoid": LEVEL_PARANOID}
+
     a = getpass(t("set_master_password"))
     b = getpass(t("repeat_master_password"))
     if a != b:
@@ -84,7 +87,7 @@ def cmd_create(args: argparse.Namespace) -> None:
         if choice != "y":
             return
 
-    create_vault(a, args.name)
+    create_vault(a, args.name, level_id=level_map[args.level])
     print(t("vault_created"))
 
 
@@ -258,6 +261,12 @@ def main() -> None:
 
     sp_create = sp.add_parser("create", help=t("cmd_create"))
     sp_create.add_argument("name", help=t("arg_vault_name"))
+    sp_create.add_argument(
+        "--level",
+        choices=["fast", "balanced", "paranoid"],
+        default="balanced",
+        help=t("arg_encryption_level"),
+    )
     sp_create.set_defaults(func=cmd_create)
 
     sp_list = sp.add_parser("list", help=t("cmd_list"))

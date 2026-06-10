@@ -17,6 +17,9 @@ _puny_manager() {
                 COMPREPLY=($(compgen -W "list switch delete" -- "$cur"))
             fi
             ;;
+        create)
+            COMPREPLY=($(compgen -W "--level" -- "$cur"))
+            ;;
         get)
             case "$prev" in
                 --timeout)

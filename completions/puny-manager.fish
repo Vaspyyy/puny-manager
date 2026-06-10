@@ -17,6 +17,7 @@ end
 
 # create
 complete -c puny-manager -n '__fish_seen_subcommand_from create' -a create -d 'Create a new vault'
+complete -c puny-manager -n '__fish_seen_subcommand_from create' -l level -d 'Encryption level (fast, balanced, paranoid)' -r -a 'fast balanced paranoid'
 # list
 complete -c puny-manager -n '__fish_seen_subcommand_from list' -a list -d 'List entries'
 # add

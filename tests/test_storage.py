@@ -4,7 +4,17 @@ from pathlib import Path
 
 import pytest
 
-from puny.crypto import derive_key, encrypt_data, generate_salt
+from puny.crypto import (
+    KDF_ARGON2ID,
+    LEVEL_BALANCED,
+    LEVEL_FAST,
+    LEVEL_PARANOID,
+    MAGIC,
+    VERSION_1,
+    derive_key,
+    encrypt_data,
+    generate_salt,
+)
 from puny.storage import (
     create_vault,
     data_dir,
@@ -15,6 +25,7 @@ from puny.storage import (
     save_vault,
     set_active_vault,
     vault_path,
+    vaults_dir,
 )
 from puny.vault import Entry, PunyError
 
@@ -157,7 +168,7 @@ class TestMigration:
         old_path = legacy_dir / "vault.puny"
 
         salt = generate_salt()
-        key = derive_key("legacy_pass", salt)
+        key = derive_key("legacy_pass", salt, KDF_ARGON2ID, LEVEL_BALANCED)
         payload = json.dumps({"version": 1, "entries": []}).encode()
         nonce, ciphertext = encrypt_data(key, payload)
         old_path.write_bytes(salt + nonce + ciphertext)
@@ -179,7 +190,7 @@ class TestMigration:
         legacy_dir.mkdir(parents=True, exist_ok=True)
 
         salt = generate_salt()
-        key = derive_key("pass", salt)
+        key = derive_key("pass", salt, KDF_ARGON2ID, LEVEL_BALANCED)
         payload = json.dumps({"version": 1, "entries": []}).encode()
         nonce, ciphertext = encrypt_data(key, payload)
         (legacy_dir / "vault.puny").write_bytes(salt + nonce + ciphertext)
@@ -189,3 +200,126 @@ class TestMigration:
         load_vault("pass")
 
         assert list_vaults() == ["default"]
+
+
+class TestEncryptionLevels:
+    def test_create_fast_and_reload(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        create_vault("password123!", "fastvault", level_id=LEVEL_FAST)
+        v = load_vault("password123!", name="fastvault")
+        assert v.kdf_id == KDF_ARGON2ID
+        assert v.level_id == LEVEL_FAST
+        assert v.entries == []
+
+    def test_create_balanced_and_reload(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        create_vault("password123!", "balvault", level_id=LEVEL_BALANCED)
+        v = load_vault("password123!", name="balvault")
+        assert v.kdf_id == KDF_ARGON2ID
+        assert v.level_id == LEVEL_BALANCED
+
+    def test_create_paranoid_and_reload(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        create_vault("password123!", "parvault", level_id=LEVEL_PARANOID)
+        v = load_vault("password123!", name="parvault")
+        assert v.kdf_id == KDF_ARGON2ID
+        assert v.level_id == LEVEL_PARANOID
+
+    def test_level_persists_after_save_reload(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        vault = create_vault("password123!", "persist", level_id=LEVEL_FAST)
+        from puny.vault import Entry
+        vault.add(Entry(name="test", username="u", password="p"))
+        from puny.storage import save_vault
+        save_vault("password123!", vault)
+
+        v2 = load_vault("password123!", name="persist")
+        assert v2.level_id == LEVEL_FAST
+        assert v2.kdf_id == KDF_ARGON2ID
+        assert len(v2.entries) == 1
+
+
+class TestNewFormatHeader:
+    def test_new_format_has_magic(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        create_vault("password123!", "magic")
+        raw = vault_path("magic").read_bytes()
+        assert raw[:4] == MAGIC
+        assert raw[4] == VERSION_1
+        assert raw[5] == KDF_ARGON2ID
+        assert raw[6] == LEVEL_BALANCED
+        assert raw[7] == 0
+
+    def test_header_includes_level(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        create_vault("password123!", "leveled", level_id=LEVEL_PARANOID)
+        raw = vault_path("leveled").read_bytes()
+        assert raw[6] == LEVEL_PARANOID
+
+
+class TestCorruption:
+    def _write_corrupt(self, monkeypatch, tmp_path, header_bytes):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        vaults_dir().mkdir(parents=True, exist_ok=True)
+        salt = generate_salt()
+        key = derive_key("password123!", salt, KDF_ARGON2ID, LEVEL_BALANCED)
+        nonce, ct = encrypt_data(key, json.dumps({"version": 1, "entries": []}).encode())
+        vault_path("corrupt").write_bytes(header_bytes + salt + nonce + ct)
+
+    def test_unsupported_version_raises(self, monkeypatch, tmp_path):
+        header = MAGIC + bytes([255, KDF_ARGON2ID, LEVEL_BALANCED, 0])
+        self._write_corrupt(monkeypatch, tmp_path, header)
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="corrupt")
+        assert exc.value.key == "unsupported_version"
+
+    def test_unsupported_kdf_raises(self, monkeypatch, tmp_path):
+        header = MAGIC + bytes([VERSION_1, 255, LEVEL_BALANCED, 0])
+        self._write_corrupt(monkeypatch, tmp_path, header)
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="corrupt")
+        assert exc.value.key == "unsupported_kdf"
+
+    def test_invalid_level_raises(self, monkeypatch, tmp_path):
+        header = MAGIC + bytes([VERSION_1, KDF_ARGON2ID, 255, 0])
+        self._write_corrupt(monkeypatch, tmp_path, header)
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="corrupt")
+        assert exc.value.key == "vault_corrupt"
+
+    def test_nonzero_flags_raises(self, monkeypatch, tmp_path):
+        header = MAGIC + bytes([VERSION_1, KDF_ARGON2ID, LEVEL_BALANCED, 1])
+        self._write_corrupt(monkeypatch, tmp_path, header)
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="corrupt")
+        assert exc.value.key == "vault_corrupt"
+
+    def test_truncated_header_raises(self, monkeypatch, tmp_path):
+        header = MAGIC + bytes([VERSION_1, KDF_ARGON2ID])
+        self._write_corrupt(monkeypatch, tmp_path, header)
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="corrupt")
+        assert exc.value.key == "vault_corrupt"
+
+    def test_wrong_password_fails(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        create_vault("correct_pass!", "wpvault")
+        with pytest.raises(PunyError) as exc:
+            load_vault("wrong_pass!", name="wpvault")
+        assert exc.value.key == "vault_decrypt_failed"

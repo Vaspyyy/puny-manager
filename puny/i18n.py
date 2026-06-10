@@ -78,6 +78,8 @@ STRINGS = {
         "vault_not_found": "Vault '{name}' not found.",
         "vault_delete_active": "Cannot delete the active vault. Switch to another first.",
         "vault_no_name": "Vault has no name set.",
+        "arg_encryption_level": "Encryption level: fast, balanced, or paranoid (default: balanced)",
+        "unsupported_kdf": "Unsupported key derivation function {kdf}.",
     },
     "de": {
         "error_prefix": "✗ Fehler: ",
@@ -147,6 +149,8 @@ STRINGS = {
         "vault_not_found": "Vault '{name}' nicht gefunden.",
         "vault_delete_active": "Aktive Vault kann nicht gelöscht werden. Zuerst wechseln.",
         "vault_no_name": "Vault hat keinen Namen.",
+        "arg_encryption_level": "Verschlüsselungsstufe: fast, balanced oder paranoid (Standard: balanced)",
+        "unsupported_kdf": "Nicht unterstützte Schlüsselableitungsfunktion {kdf}.",
     },
     "fr": {
         "error_prefix": "✗ Erreur : ",
@@ -216,6 +220,8 @@ STRINGS = {
         "vault_not_found": "Coffre '{name}' introuvable.",
         "vault_delete_active": "Impossible de supprimer le coffre actif. Changez d'abord.",
         "vault_no_name": "Le coffre n'a pas de nom.",
+        "arg_encryption_level": "Niveau de chiffrement : fast, balanced ou paranoid (défaut : balanced)",
+        "unsupported_kdf": "Fonction de dérivation de clé non prise en charge {kdf}.",
     },
     "es": {
         "error_prefix": "✗ Error: ",
@@ -285,6 +291,8 @@ STRINGS = {
         "vault_not_found": "Cofre '{name}' no encontrado.",
         "vault_delete_active": "No se puede eliminar el cofre activo. Cambie primero.",
         "vault_no_name": "El cofre no tiene nombre.",
+        "arg_encryption_level": "Nivel de cifrado: fast, balanced o paranoid (por defecto: balanced)",
+        "unsupported_kdf": "Función de derivación de clave no soportada {kdf}.",
     },
     "ru": {
         "error_prefix": "✗ Ошибка: ",
@@ -354,6 +362,8 @@ STRINGS = {
         "vault_not_found": "Хранилище '{name}' не найдено.",
         "vault_delete_active": "Нельзя удалить активное хранилище. Сначала смените.",
         "vault_no_name": "У хранилища нет имени.",
+        "arg_encryption_level": "Уровень шифрования: fast, balanced или paranoid (по умолчанию: balanced)",
+        "unsupported_kdf": "Неподдерживаемая функция формирования ключа {kdf}.",
     },
     "pt": {
         "error_prefix": "✗ Erro: ",
@@ -423,6 +433,8 @@ STRINGS = {
         "vault_not_found": "Cofre '{name}' não encontrado.",
         "vault_delete_active": "Não é possível apagar o cofre ativo. Troque antes.",
         "vault_no_name": "O cofre não tem nome.",
+        "arg_encryption_level": "Nível de encriptação: fast, balanced ou paranoid (padrão: balanced)",
+        "unsupported_kdf": "Função de derivação de chave não suportada {kdf}.",
     },
     "zh": {
         "error_prefix": "✗ 错误: ",
@@ -492,6 +504,8 @@ STRINGS = {
         "vault_not_found": "未找到密码库 '{name}'。",
         "vault_delete_active": "无法删除活跃的密码库。请先切换。",
         "vault_no_name": "密码库没有名称。",
+        "arg_encryption_level": "加密等级: fast, balanced 或 paranoid (默认: balanced)",
+        "unsupported_kdf": "不支持的密钥派生函数 {kdf}。",
     },
 }
 
