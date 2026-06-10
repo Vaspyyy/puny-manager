@@ -11,6 +11,8 @@ Note: To use clipboard feature you need wl-clipboard (wayland) or xclip (x11)
 
 - Vault encryption: AES-256-GCM
 - Key derivation: Argon2id (with legacy PBKDF2-HMAC-SHA256 support)
+- Configurable encryption level: fast (32MB), balanced (64MB, default), paranoid (256MB)
+- Versioned binary format with header validation
 - Every command requires the master password
 - No unlocked session or caching
 - The vault file is binary and unreadable if opened directly
@@ -64,15 +66,20 @@ cp completions/puny-manager.fish ~/.config/fish/completions/puny-manager.fish
 ```
 
 ## Usage
+
 Change language (en, de, fr, es, ru, pt, zh):
 ```bash
 puny-manager lang        # lists available languages
 puny-manager lang de     # switches to German
 ```
 
+### Vault management
+
 Create a new vault:
 ```bash
-puny-manager create <name>
+puny-manager create personal                   # balanced encryption
+puny-manager create secrets --level paranoid   # 256MB Argon2id
+puny-manager create throwaway --level fast     # 32MB, quicker unlock
 ```
 Master passwords must be at least 4 characters.
 For existing v1.x users: your vault auto-migrates on first run.
@@ -84,9 +91,13 @@ puny-manager vault switch <name>   # change active vault
 puny-manager vault delete <name>   # remove a vault
 ```
 
+### Passwords & entries
+
 Add a new entry:
 ```bash
-puny-manager add
+puny-manager add                        # interactive prompts
+puny-manager add --generate             # auto-generates password
+puny-manager add --generate --length 32 # custom length
 ```
 You can store optional URL and tags for entries.
 
@@ -112,9 +123,19 @@ puny-manager passwd
 ```
 Edit an entry:
 ```bash
-puny-manager edit <name>
+puny-manager edit <name>                # interactive
+puny-manager edit <name> --generate     # regenerate password
 ```
 Remove an entry:
 ```bash
 puny-manager rm <name>
 ```
+
+### Audit
+
+Check vault health and password hygiene:
+```bash
+puny-manager stats
+```
+Shows entry count, weak passwords, duplicate detection, and tag breakdown
+without revealing any actual passwords.
