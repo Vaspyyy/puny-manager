@@ -8,15 +8,15 @@ complete -c puny-manager -f
 complete -c puny-manager -l version -d 'Show version'
 complete -c puny-manager -l help -d 'Show help'
 
-# subcommands
-set -l subcmds init list add get rm gen passwd edit lang
+# top-level subcommands
+set -l topcmds create list add get rm gen passwd edit lang vault
 
-for cmd in $subcmds
-    complete -c puny-manager -n "not __fish_seen_subcommand_from $subcmds" -a "$cmd"
+for cmd in $topcmds
+    complete -c puny-manager -n "not __fish_seen_subcommand_from $topcmds" -a "$cmd"
 end
 
-# init
-complete -c puny-manager -n '__fish_seen_subcommand_from init' -a init -d 'Initialize a new vault'
+# create
+complete -c puny-manager -n '__fish_seen_subcommand_from create' -a create -d 'Create a new vault'
 # list
 complete -c puny-manager -n '__fish_seen_subcommand_from list' -a list -d 'List entries'
 # add
@@ -35,3 +35,12 @@ complete -c puny-manager -n '__fish_seen_subcommand_from edit' -a edit -d 'Edit 
 # lang
 complete -c puny-manager -n '__fish_seen_subcommand_from lang' -a lang -d 'Set language'
 complete -c puny-manager -n '__fish_seen_subcommand_from lang' -a 'en de fr es ru pt zh'
+# vault
+complete -c puny-manager -n '__fish_seen_subcommand_from vault' -a vault -d 'Manage vaults'
+set -l vaultcmds list switch delete
+for cmd in $vaultcmds
+    complete -c puny-manager -n "__fish_seen_subcommand_from vault; and not __fish_seen_subcommand_from $vaultcmds" -a "$cmd"
+end
+complete -c puny-manager -n '__fish_seen_subcommand_from vault; and __fish_seen_subcommand_from list' -a list -d 'List vaults'
+complete -c puny-manager -n '__fish_seen_subcommand_from vault; and __fish_seen_subcommand_from switch' -a switch -d 'Switch active vault'
+complete -c puny-manager -n '__fish_seen_subcommand_from vault; and __fish_seen_subcommand_from delete' -a delete -d 'Delete a vault'

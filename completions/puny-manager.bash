@@ -7,11 +7,16 @@ _puny_manager() {
     _init_completion || return
 
     if ((cword == 1)); then
-        COMPREPLY=($(compgen -W "init list add get rm gen passwd edit lang --version --help" -- "$cur"))
+        COMPREPLY=($(compgen -W "create list add get rm gen passwd edit lang vault --version --help" -- "$cur"))
         return
     fi
 
     case "${words[1]}" in
+        vault)
+            if ((cword == 2)); then
+                COMPREPLY=($(compgen -W "list switch delete" -- "$cur"))
+            fi
+            ;;
         get)
             case "$prev" in
                 --timeout)

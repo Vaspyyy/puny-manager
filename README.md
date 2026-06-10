@@ -70,11 +70,19 @@ puny-manager lang        # lists available languages
 puny-manager lang de     # switches to German
 ```
 
-Initialize a new vault:
+Create a new vault:
 ```bash
-puny-manager init
+puny-manager create <name>
 ```
 Master passwords must be at least 4 characters.
+For existing v1.x users: your vault auto-migrates on first run.
+
+Manage vaults:
+```bash
+puny-manager vault list            # list all vaults (* = active)
+puny-manager vault switch <name>   # change active vault
+puny-manager vault delete <name>   # remove a vault
+```
 
 Add a new entry:
 ```bash

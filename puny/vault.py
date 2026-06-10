@@ -28,6 +28,7 @@ class Entry:
 class Vault:
     version: int = 1
     entries: list[Entry] = field(default_factory=list)
+    name: str | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if self.version not in SUPPORTED_VERSIONS:

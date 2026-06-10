@@ -16,7 +16,7 @@ _puny_manager() {
         subcmd)
             local -a cmds
             cmds=(
-                'init:Initialize a new vault'
+                'create:Create a new vault'
                 'list:List entries'
                 'add:Add a new entry'
                 'get:Show an entry'
@@ -25,11 +25,26 @@ _puny_manager() {
                 'passwd:Change master password'
                 'edit:Edit an entry'
                 'lang:Set language'
+                'vault:Manage vaults'
             )
             _describe -t commands 'subcommand' cmds
             ;;
         args)
             case "$words[1]" in
+                vault)
+                    _arguments '1:vault command:->vaultcmd' && return
+                    case "$state" in
+                        vaultcmd)
+                            local -a vcmds
+                            vcmds=(
+                                'list:List vaults'
+                                'switch:Switch active vault'
+                                'delete:Delete a vault'
+                            )
+                            _describe -t commands 'vault command' vcmds
+                            ;;
+                    esac
+                    ;;
                 get)
                     _arguments \
                         '--timeout[Clipboard clear timeout]:seconds:' \

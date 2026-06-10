@@ -4,7 +4,19 @@ import subprocess
 from getpass import getpass
 
 from .i18n import STRINGS, get_lang, t
-from .storage import config_dir, init_vault, lang_path, load_vault, remove_backup, save_vault
+from .storage import (
+    config_dir,
+    create_vault,
+    delete_vault,
+    get_active_vault,
+    lang_path,
+    list_vaults,
+    load_vault,
+    remove_backup,
+    save_vault,
+    set_active_vault,
+    vault_path,
+)
 from .util import (
     check_master_password,
     generate_password,
@@ -39,6 +51,13 @@ def copy_to_clipboard(text: str) -> bool:
     return False
 
 
+def _require_active_vault() -> str:
+    name = get_active_vault()
+    if name is None:
+        raise PunyError("no_active_vault")
+    return name
+
+
 def cmd_lang(args: argparse.Namespace) -> None:
     if args.lang is None:
         current = get_lang()
@@ -51,7 +70,7 @@ def cmd_lang(args: argparse.Namespace) -> None:
     print(t("lang_set", lang=args.lang))
 
 
-def cmd_init(args: argparse.Namespace) -> None:
+def cmd_create(args: argparse.Namespace) -> None:
     a = getpass(t("set_master_password"))
     b = getpass(t("repeat_master_password"))
     if a != b:
@@ -65,12 +84,13 @@ def cmd_init(args: argparse.Namespace) -> None:
         if choice != "y":
             return
 
-    init_vault(a)
+    create_vault(a, args.name)
     print(t("vault_created"))
 
 
 def cmd_list(args: argparse.Namespace) -> None:
-    v = load_vault(getpass(t("master_password")))
+    name = _require_active_vault()
+    v = load_vault(getpass(t("master_password")), name=name)
     if not v.entries:
         print(t("no_entries"))
     else:
@@ -94,8 +114,9 @@ def _prompt_entry_interactive() -> Entry:
 
 
 def cmd_add(args: argparse.Namespace) -> None:
+    name = _require_active_vault()
     m = getpass(t("master_password"))
-    v = load_vault(m)
+    v = load_vault(m, name=name)
     e = _prompt_entry_interactive()
     v.add(e)
     save_vault(m, v)
@@ -103,8 +124,9 @@ def cmd_add(args: argparse.Namespace) -> None:
 
 
 def cmd_get(args: argparse.Namespace) -> None:
+    name = _require_active_vault()
     m = getpass(t("master_password"))
-    v = load_vault(m)
+    v = load_vault(m, name=name)
     e = smart_find(v.entries, args.name)
     if not e:
         raise PunyError("entry_not_found", name=args.name)
@@ -126,8 +148,9 @@ def cmd_get(args: argparse.Namespace) -> None:
 
 
 def cmd_rm(args: argparse.Namespace) -> None:
+    name = _require_active_vault()
     m = getpass(t("master_password"))
-    v = load_vault(m)
+    v = load_vault(m, name=name)
     e = smart_find(v.entries, args.name)
     if not e:
         raise PunyError("entry_not_found", name=args.name)
@@ -143,8 +166,9 @@ def cmd_gen(args: argparse.Namespace) -> None:
 
 
 def cmd_passwd(args: argparse.Namespace) -> None:
+    name = _require_active_vault()
     old = getpass(t("master_password"))
-    v = load_vault(old)
+    v = load_vault(old, name=name)
     a = getpass(t("set_master_password"))
     b = getpass(t("repeat_master_password"))
     if a != b:
@@ -158,14 +182,15 @@ def cmd_passwd(args: argparse.Namespace) -> None:
         if choice != "y":
             return
 
-    remove_backup()
+    remove_backup(name)
     save_vault(a, v)
     print(t("vault_updated"))
 
 
 def cmd_edit(args: argparse.Namespace) -> None:
+    name = _require_active_vault()
     m = getpass(t("master_password"))
-    v = load_vault(m)
+    v = load_vault(m, name=name)
 
     old = smart_find(v.entries, args.name)
     if not old:
@@ -193,6 +218,34 @@ def cmd_edit(args: argparse.Namespace) -> None:
     print(t("entry_updated", name=old.name))
 
 
+def cmd_vault_list(args: argparse.Namespace) -> None:
+    active = get_active_vault()
+    vaults = list_vaults()
+    if not vaults:
+        print(t("no_vaults"))
+        return
+    print(t("vaults_available"))
+    for vname in vaults:
+        marker = " (*)" if vname == active else ""
+        print(f"  {vname}{marker}")
+
+
+def cmd_vault_switch(args: argparse.Namespace) -> None:
+    if not vault_path(args.name).exists():
+        raise PunyError("vault_not_found", name=args.name)
+    set_active_vault(args.name)
+    print(t("vault_switched", name=args.name))
+
+
+def cmd_vault_delete(args: argparse.Namespace) -> None:
+    print(t("vault_delete_warning", name=args.name))
+    choice = input(t("confirm_delete", name=args.name)).strip().lower()
+    if choice != "y":
+        return
+    delete_vault(args.name)
+    print(t("vault_deleted", name=args.name))
+
+
 def main() -> None:
     p = argparse.ArgumentParser(prog="puny-manager")
     p.add_argument(
@@ -203,8 +256,9 @@ def main() -> None:
 
     sp = p.add_subparsers(dest="cmd", required=True)
 
-    sp_init = sp.add_parser("init", help=t("cmd_init"))
-    sp_init.set_defaults(func=cmd_init)
+    sp_create = sp.add_parser("create", help=t("cmd_create"))
+    sp_create.add_argument("name", help=t("arg_vault_name"))
+    sp_create.set_defaults(func=cmd_create)
 
     sp_list = sp.add_parser("list", help=t("cmd_list"))
     sp_list.set_defaults(func=cmd_list)
@@ -235,6 +289,20 @@ def main() -> None:
     sp_edit = sp.add_parser("edit", help=t("cmd_edit"))
     sp_edit.add_argument("name", help=t("arg_name"))
     sp_edit.set_defaults(func=cmd_edit)
+
+    sp_vault = sp.add_parser("vault", help=t("cmd_vault"))
+    vault_sp = sp_vault.add_subparsers(dest="vault_cmd", required=True)
+
+    vault_list_p = vault_sp.add_parser("list", help=t("cmd_vault_list"))
+    vault_list_p.set_defaults(func=cmd_vault_list)
+
+    vault_switch_p = vault_sp.add_parser("switch", help=t("cmd_vault_switch"))
+    vault_switch_p.add_argument("name", help=t("arg_vault_name"))
+    vault_switch_p.set_defaults(func=cmd_vault_switch)
+
+    vault_delete_p = vault_sp.add_parser("delete", help=t("cmd_vault_delete"))
+    vault_delete_p.add_argument("name", help=t("arg_vault_name"))
+    vault_delete_p.set_defaults(func=cmd_vault_delete)
 
     args = p.parse_args()
 
