@@ -1,6 +1,12 @@
 import pytest
 
-from puny.util import check_master_password, generate_password, smart_find
+from puny.util import (
+    analyze_passwords,
+    check_master_password,
+    generate_password,
+    is_weak_password,
+    smart_find,
+)
 from puny.vault import Entry
 
 
@@ -166,3 +172,87 @@ class TestCheckMasterPasswordBoundaries:
         err, warn = check_master_password("abcdefgh")
         assert err is None
         assert warn == "weak_master_password"
+
+
+class TestIsWeakPassword:
+    def test_short_password_is_weak(self):
+        assert is_weak_password("Abc1!")
+
+    def test_no_upper_is_weak(self):
+        assert is_weak_password("abc123!@")
+
+    def test_no_lower_is_weak(self):
+        assert is_weak_password("ABC123!@")
+
+    def test_no_digit_is_weak(self):
+        assert is_weak_password("Abcdef!@")
+
+    def test_no_symbol_is_weak(self):
+        assert is_weak_password("Abcdef123")
+
+    def test_strong_password_is_not_weak(self):
+        assert not is_weak_password("CorrectHorseBatteryStaple1!")
+
+    def test_minimum_strong_is_not_weak(self):
+        assert not is_weak_password("aA1!bcde")
+
+
+class TestAnalyzePasswords:
+    def test_empty_entries(self):
+        result = analyze_passwords([])
+        assert result["count"] == 0
+        assert result["weak_count"] == 0
+        assert result["unique_count"] == 0
+        assert result["duplicate_sets"] == []
+
+    def test_single_entry(self):
+        from puny.vault import Entry
+        entries = [Entry(name="x", username="u", password="Str0ng!Pass")]
+        result = analyze_passwords(entries)
+        assert result["count"] == 1
+        assert result["weak_count"] == 0
+        assert result["unique_count"] == 1
+        assert result["duplicate_sets"] == []
+
+    def test_weak_password_counted(self):
+        from puny.vault import Entry
+        entries = [
+            Entry(name="a", username="u", password="weak"),
+            Entry(name="b", username="u", password="Str0ng!1"),
+        ]
+        result = analyze_passwords(entries)
+        assert result["weak_count"] == 1
+
+    def test_duplicate_passwords_detected(self):
+        from puny.vault import Entry
+        entries = [
+            Entry(name="a", username="u", password="same"),
+            Entry(name="b", username="u", password="same"),
+            Entry(name="c", username="u", password="diff"),
+        ]
+        result = analyze_passwords(entries)
+        assert result["unique_count"] == 2
+        assert len(result["duplicate_sets"]) == 1
+        assert sorted(result["duplicate_sets"][0]) == ["a", "b"]
+
+    def test_avg_length_rounded_down(self):
+        from puny.vault import Entry
+        entries = [
+            Entry(name="a", username="u", password="12345678"),
+            Entry(name="b", username="u", password="123456"),
+        ]
+        result = analyze_passwords(entries)
+        assert result["avg_length"] == 7  # (8+6)//2
+
+    def test_multiple_duplicate_sets(self):
+        from puny.vault import Entry
+        entries = [
+            Entry(name="a1", username="u", password="dup1"),
+            Entry(name="a2", username="u", password="dup1"),
+            Entry(name="b1", username="u", password="dup2"),
+            Entry(name="b2", username="u", password="dup2"),
+            Entry(name="b3", username="u", password="dup2"),
+        ]
+        result = analyze_passwords(entries)
+        assert result["unique_count"] == 2
+        assert len(result["duplicate_sets"]) == 2

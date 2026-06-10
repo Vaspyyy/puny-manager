@@ -21,6 +21,7 @@ _puny_manager() {
                 'add:Add a new entry'
                 'get:Show an entry'
                 'rm:Remove an entry'
+                'stats:Audit vault'
                 'gen:Generate a secure password'
                 'passwd:Change master password'
                 'edit:Edit an entry'

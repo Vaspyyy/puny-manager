@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from getpass import getpass
 
-from .crypto import LEVEL_BALANCED, LEVEL_FAST, LEVEL_PARANOID
+from .crypto import KDF_ARGON2ID, LEVEL_BALANCED, LEVEL_FAST, LEVEL_PARANOID
 from .i18n import STRINGS, get_lang, t
 from .storage import (
     config_dir,
@@ -19,6 +19,7 @@ from .storage import (
     vault_path,
 )
 from .util import (
+    analyze_passwords,
     check_master_password,
     generate_password,
     schedule_clipboard_clear,
@@ -172,6 +173,63 @@ def cmd_rm(args: argparse.Namespace) -> None:
     print(t("entry_removed", name=e.name))
 
 
+def cmd_stats(args: argparse.Namespace) -> None:
+    name = _require_active_vault()
+    m = getpass(t("master_password"))
+    v = load_vault(m, name=name)
+    path = vault_path(name)
+
+    stat = path.stat()
+    kdf_name = "Argon2id" if v.kdf_id == KDF_ARGON2ID else "PBKDF2"
+    level_names = {LEVEL_FAST: "fast", LEVEL_BALANCED: "balanced", LEVEL_PARANOID: "paranoid"}
+    level_name = level_names.get(v.level_id, str(v.level_id))
+
+    from datetime import datetime, timezone
+    created = datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).strftime("%Y-%m-%d")
+    modified = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).strftime("%Y-%m-%d %H:%M")
+
+    print(f"\n{t('stats_vault', name=name)}")
+    print(f"  {t('stats_encryption', kdf=kdf_name, level=level_name)}")
+    print(f"  {t('stats_created', date=created)}")
+    print(f"  {t('stats_modified', date=modified)}")
+
+    analysis = analyze_passwords(v.entries)
+    count = analysis["count"]
+    print(f"\n  {t('stats_entries', count=count)}")
+
+    url_count = sum(1 for e in v.entries if e.url)
+    notes_count = sum(1 for e in v.entries if e.notes)
+    tags_count = sum(1 for e in v.entries if e.tags)
+    print(f"  {t('stats_with_urls', count=url_count)}")
+    print(f"  {t('stats_with_notes', count=notes_count)}")
+    print(f"  {t('stats_with_tags', count=tags_count)}")
+
+    if count > 0:
+        print(f"\n  {t('stats_avg_length', n=analysis['avg_length'])}")
+        print(f"  {t('stats_weak', count=analysis['weak_count'])}")
+        print(f"  {t('stats_unique', count=analysis['unique_count'])}")
+
+        dupe_sets = analysis["duplicate_sets"]
+        if dupe_sets:
+            dupe_desc = ", ".join(
+                f"{len(s)}×" for s in sorted(dupe_sets, key=len, reverse=True)
+            )
+            print(f"  {t('stats_duplicates', sets=len(dupe_sets))} ({dupe_desc})")
+        else:
+            print(f"  {t('stats_duplicates', sets=0)}")
+
+    tag_counts: dict[str, int] = {}
+    for e in v.entries:
+        for tag in e.tags:
+            tag_counts[tag] = tag_counts.get(tag, 0) + 1
+    if tag_counts:
+        tags_display = "  ".join(
+            f"{tag} ({n})" for tag, n in sorted(tag_counts.items(), key=lambda x: -x[1])
+        )
+        print(f"\n  {t('stats_tags')}:")
+        print(f"  {tags_display}")
+
+
 def cmd_gen(args: argparse.Namespace) -> None:
     if args.length < 8:
         raise PunyError("password_length_error")
@@ -304,6 +362,9 @@ def main() -> None:
     sp_rm = sp.add_parser("rm", help=t("cmd_rm"))
     sp_rm.add_argument("name", help=t("arg_name"))
     sp_rm.set_defaults(func=cmd_rm)
+
+    sp_stats = sp.add_parser("stats", help=t("cmd_stats"))
+    sp_stats.set_defaults(func=cmd_stats)
 
     sp_gen = sp.add_parser("gen", help=t("cmd_gen"))
     sp_gen.add_argument("length", nargs="?", type=int, default=20)

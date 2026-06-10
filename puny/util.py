@@ -101,3 +101,42 @@ def smart_find(entries: list[E], query: str) -> E | None:
         return None
 
     return matches[0]
+
+
+def is_weak_password(password: str) -> bool:
+    if len(password) < 8:
+        return True
+    if not any(c.isupper() for c in password):
+        return True
+    if not any(c.islower() for c in password):
+        return True
+    if not any(c.isdigit() for c in password):
+        return True
+    return not any(c in SYMBOLS for c in password)
+
+
+def analyze_passwords(entries: list[Entry]) -> dict:
+    total = len(entries)
+    if total == 0:
+        return {
+            "count": 0, "avg_length": 0, "weak_count": 0,
+            "unique_count": 0, "duplicate_sets": [],
+        }
+
+    lengths = [len(e.password) for e in entries]
+    avg_length = sum(lengths) // total
+    weak_count = sum(1 for e in entries if is_weak_password(e.password))
+
+    seen: dict[str, list[str]] = {}
+    for e in entries:
+        seen.setdefault(e.password, []).append(e.name)
+
+    duplicate_sets = [names for names in seen.values() if len(names) > 1]
+
+    return {
+        "count": total,
+        "avg_length": avg_length,
+        "weak_count": weak_count,
+        "unique_count": len(seen),
+        "duplicate_sets": duplicate_sets,
+    }

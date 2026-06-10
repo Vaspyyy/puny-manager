@@ -7,7 +7,7 @@ _puny_manager() {
     _init_completion || return
 
     if ((cword == 1)); then
-        COMPREPLY=($(compgen -W "create list add get rm gen passwd edit lang vault --version --help" -- "$cur"))
+        COMPREPLY=($(compgen -W "create list add get rm stats gen passwd edit lang vault --version --help" -- "$cur"))
         return
     fi
 

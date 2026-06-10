@@ -9,7 +9,7 @@ complete -c puny-manager -l version -d 'Show version'
 complete -c puny-manager -l help -d 'Show help'
 
 # top-level subcommands
-set -l topcmds create list add get rm gen passwd edit lang vault
+set -l topcmds create list add get rm stats gen passwd edit lang vault
 
 for cmd in $topcmds
     complete -c puny-manager -n "not __fish_seen_subcommand_from $topcmds" -a "$cmd"
@@ -28,6 +28,8 @@ complete -c puny-manager -n '__fish_seen_subcommand_from add' -l length -d 'Pass
 complete -c puny-manager -n '__fish_seen_subcommand_from edit' -a edit -d 'Edit an entry'
 complete -c puny-manager -n '__fish_seen_subcommand_from edit' -l generate -d 'Auto-generate password'
 complete -c puny-manager -n '__fish_seen_subcommand_from edit' -l length -d 'Password length'
+# stats
+complete -c puny-manager -n '__fish_seen_subcommand_from stats' -a stats -d 'Audit vault'
 # lang
 complete -c puny-manager -n '__fish_seen_subcommand_from lang' -a lang -d 'Set language'
 complete -c puny-manager -n '__fish_seen_subcommand_from lang' -a 'en de fr es ru pt zh'
