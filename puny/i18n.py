@@ -1,13 +1,4 @@
-import os
-from pathlib import Path
-
-from .storage import APP_NAME
-
-
-def get_lang_path() -> Path:
-    base = Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config")))
-    return base / APP_NAME / "lang"
-
+from .storage import lang_path
 
 STRINGS = {
     "en": {
@@ -60,6 +51,7 @@ STRINGS = {
         "editing_entry": "Editing entry:",
         "entry_updated": "Entry '{name}' updated.",
         "leave_empty": "leave empty to keep",
+        "clear_hint": "type - to clear",
         "cmd_init": "Initialize a new vault",
         "cmd_list": "List entries",
         "cmd_add": "Add a new entry",
@@ -92,6 +84,7 @@ STRINGS = {
         "vault_not_found": "Vault '{name}' not found.",
         "vault_delete_active": "Cannot delete the active vault. Switch to another first.",
         "vault_no_name": "Vault has no name set.",
+        "invalid_vault_name": "Invalid vault name '{name}'. Use only letters, numbers, hyphens, and underscores.",
         "arg_encryption_level": "Encryption level: fast, balanced, or paranoid (default: balanced)",
         "unsupported_kdf": "Unsupported key derivation function {kdf}.",
         "arg_generate": "Auto-generate password and copy to clipboard",
@@ -147,6 +140,7 @@ STRINGS = {
         "editing_entry": "Bearbeite Eintrag:",
         "entry_updated": "Eintrag '{name}' aktualisiert.",
         "leave_empty": "leer lassen zum Behalten",
+        "clear_hint": "\"-\" zum Leeren",
         "cmd_init": "Neue Vault erstellen",
         "cmd_list": "Einträge auflisten",
         "cmd_add": "Eintrag hinzufügen",
@@ -179,6 +173,7 @@ STRINGS = {
         "vault_not_found": "Vault '{name}' nicht gefunden.",
         "vault_delete_active": "Aktive Vault kann nicht gelöscht werden. Zuerst wechseln.",
         "vault_no_name": "Vault hat keinen Namen.",
+        "invalid_vault_name": "Ungültiger Vault-Name '{name}'. Nur Buchstaben, Zahlen, Binde- und Unterstriche erlaubt.",
         "arg_encryption_level": "Verschlüsselungsstufe: fast, balanced oder paranoid (Standard: balanced)",
         "unsupported_kdf": "Nicht unterstützte Schlüsselableitungsfunktion {kdf}.",
         "arg_generate": "Passwort automatisch generieren und in Zwischenablage kopieren",
@@ -234,6 +229,7 @@ STRINGS = {
         "editing_entry": "Modification de l'entrée :",
         "entry_updated": "Entrée '{name}' mise à jour.",
         "leave_empty": "laisser vide pour conserver",
+        "clear_hint": "tapez - pour effacer",
         "cmd_init": "Initialiser un nouveau coffre",
         "cmd_list": "Lister les entrées",
         "cmd_add": "Ajouter une nouvelle entrée",
@@ -266,6 +262,7 @@ STRINGS = {
         "vault_not_found": "Coffre '{name}' introuvable.",
         "vault_delete_active": "Impossible de supprimer le coffre actif. Changez d'abord.",
         "vault_no_name": "Le coffre n'a pas de nom.",
+        "invalid_vault_name": "Nom de coffre invalide '{name}'. Utilisez uniquement lettres, chiffres, tirets et underscores.",
         "arg_encryption_level": "Niveau de chiffrement : fast, balanced ou paranoid (défaut : balanced)",
         "unsupported_kdf": "Fonction de dérivation de clé non prise en charge {kdf}.",
         "arg_generate": "Générer automatiquement le mot de passe et copier dans le presse-papiers",
@@ -321,6 +318,7 @@ STRINGS = {
         "editing_entry": "Editando entrada:",
         "entry_updated": "Entrada '{name}' actualizada.",
         "leave_empty": "dejar vacío para mantener",
+        "clear_hint": "escriba - para borrar",
         "cmd_init": "Inicializar un nuevo cofre",
         "cmd_list": "Listar entradas",
         "cmd_add": "Agregar una nueva entrada",
@@ -353,6 +351,7 @@ STRINGS = {
         "vault_not_found": "Cofre '{name}' no encontrado.",
         "vault_delete_active": "No se puede eliminar el cofre activo. Cambie primero.",
         "vault_no_name": "El cofre no tiene nombre.",
+        "invalid_vault_name": "Nombre de cofre no válido '{name}'. Use solo letras, números, guiones y guiones bajos.",
         "arg_encryption_level": "Nivel de cifrado: fast, balanced o paranoid (por defecto: balanced)",
         "unsupported_kdf": "Función de derivación de clave no soportada {kdf}.",
         "arg_generate": "Generar contraseña automáticamente y copiar al portapapeles",
@@ -408,6 +407,7 @@ STRINGS = {
         "editing_entry": "Редактирование записи:",
         "entry_updated": "Запись '{name}' обновлена.",
         "leave_empty": "оставьте пустым, чтобы сохранить",
+        "clear_hint": "введите - для очистки",
         "cmd_init": "Создать новое хранилище",
         "cmd_list": "Показать список записей",
         "cmd_add": "Добавить новую запись",
@@ -440,6 +440,7 @@ STRINGS = {
         "vault_not_found": "Хранилище '{name}' не найдено.",
         "vault_delete_active": "Нельзя удалить активное хранилище. Сначала смените.",
         "vault_no_name": "У хранилища нет имени.",
+        "invalid_vault_name": "Недопустимое имя хранилища '{name}'. Используйте только буквы, цифры, дефисы и подчёркивания.",
         "arg_encryption_level": "Уровень шифрования: fast, balanced или paranoid (по умолчанию: balanced)",
         "unsupported_kdf": "Неподдерживаемая функция формирования ключа {kdf}.",
         "arg_generate": "Автоматически сгенерировать пароль и скопировать в буфер обмена",
@@ -495,6 +496,7 @@ STRINGS = {
         "editing_entry": "Editando entrada:",
         "entry_updated": "Entrada '{name}' atualizada.",
         "leave_empty": "deixe vazio para reter",
+        "clear_hint": "digite - para limpar",
         "cmd_init": "Iniciar novo cofre",
         "cmd_list": "Listar entradas",
         "cmd_add": "Adicionar nova entrada",
@@ -527,6 +529,7 @@ STRINGS = {
         "vault_not_found": "Cofre '{name}' não encontrado.",
         "vault_delete_active": "Não é possível apagar o cofre ativo. Troque antes.",
         "vault_no_name": "O cofre não tem nome.",
+        "invalid_vault_name": "Nome de cofre inválido '{name}'. Use apenas letras, números, hífens e underscores.",
         "arg_encryption_level": "Nível de encriptação: fast, balanced ou paranoid (padrão: balanced)",
         "unsupported_kdf": "Função de derivação de chave não suportada {kdf}.",
         "arg_generate": "Gerar senha automaticamente e copiar para área de transferência",
@@ -582,6 +585,7 @@ STRINGS = {
         "editing_entry": "正在编辑条目:",
         "entry_updated": "条目 '{name}' 已更新。",
         "leave_empty": "留空以保留",
+        "clear_hint": "输入 - 以清除",
         "cmd_init": "初始化新密码库",
         "cmd_list": "列出条目",
         "cmd_add": "添加新条目",
@@ -614,6 +618,7 @@ STRINGS = {
         "vault_not_found": "未找到密码库 '{name}'。",
         "vault_delete_active": "无法删除活跃的密码库。请先切换。",
         "vault_no_name": "密码库没有名称。",
+        "invalid_vault_name": "无效的密码库名称 '{name}'。仅允许字母、数字、连字符和下划线。",
         "arg_encryption_level": "加密等级: fast, balanced 或 paranoid (默认: balanced)",
         "unsupported_kdf": "不支持的密钥派生函数 {kdf}。",
         "arg_generate": "自动生成密码并复制到剪贴板",
@@ -624,7 +629,7 @@ STRINGS = {
 
 def get_lang() -> str:
     try:
-        lang = get_lang_path().read_text().strip()
+        lang = lang_path().read_text().strip()
         return lang if lang in STRINGS else "en"
     except FileNotFoundError:
         return "en"

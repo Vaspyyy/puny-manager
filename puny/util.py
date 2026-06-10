@@ -2,7 +2,7 @@ import secrets
 import shutil
 import string
 import subprocess
-import sys
+import threading
 from typing import TypeVar
 
 from .vault import Entry
@@ -12,7 +12,7 @@ E = TypeVar("E", bound=Entry)
 SYMBOLS = "!@#$%^&*()-_=+[]{};:,.<>?"
 ALPHABET = string.ascii_letters + string.digits + SYMBOLS
 
-_clipboard_clear_processes: list[subprocess.Popen[bytes]] = []
+_clipboard_timers: list[threading.Timer] = []
 
 
 def generate_password(length: int) -> str:
@@ -24,14 +24,13 @@ def generate_password(length: int) -> str:
 def check_master_password(password: str) -> tuple[str | None, str | None]:
     if len(password) < 4:
         return "master_password_too_short", None
-    warnings = []
-    if len(password) < 8:
-        warnings.append("short")
-    if not any(c in SYMBOLS for c in password):
-        warnings.append("no_symbol")
-    if warnings:
+    if len(password) < 8 or not any(c in SYMBOLS for c in password):
         return None, "weak_master_password"
     return None, None
+
+
+def _clear_clipboard(clear_cmd: list[str]) -> None:
+    subprocess.run(clear_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def schedule_clipboard_clear(timeout_s: int) -> None:
@@ -44,25 +43,14 @@ def schedule_clipboard_clear(timeout_s: int) -> None:
     else:
         return
 
-    for proc in _clipboard_clear_processes:
-        proc.kill()
-    _clipboard_clear_processes.clear()
+    for timer in _clipboard_timers:
+        timer.cancel()
+    _clipboard_timers.clear()
 
-    proc = subprocess.Popen(
-        [
-            sys.executable,
-            "-c",
-            (
-                "import time, subprocess;"
-                f"time.sleep({timeout_s});"
-                f"subprocess.run({clear_cmd!r},"
-                " stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)"
-            ),
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    _clipboard_clear_processes.append(proc)
+    timer = threading.Timer(timeout_s, _clear_clipboard, args=(clear_cmd,))
+    timer.daemon = True
+    timer.start()
+    _clipboard_timers.append(timer)
 
 
 def smart_find(entries: list[E], query: str) -> E | None:

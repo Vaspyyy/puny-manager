@@ -23,7 +23,7 @@ class Entry:
 
     def __post_init__(self) -> None:
         if not self.name.strip():
-            raise ValueError("Entry name must not be empty.")
+            raise PunyError("entry_name_required")
 
 
 @dataclass

@@ -24,6 +24,7 @@ from puny.storage import (
     load_vault,
     save_vault,
     set_active_vault,
+    validate_vault_name,
     vault_path,
     vaults_dir,
 )
@@ -39,6 +40,57 @@ class TestVaultPaths:
     def test_data_dir_respects_xdg(self, monkeypatch):
         monkeypatch.setitem(os.environ, "XDG_DATA_HOME", "/custom/data")
         assert data_dir() == Path("/custom/data/puny-manager")
+
+
+class TestVaultNameValidation:
+    def test_valid_names_accepted(self):
+        for name in ["test", "my-vault", "vault_2", "A", "a1b2c3"]:
+            validate_vault_name(name)
+
+    def test_path_traversal_rejected(self):
+        with pytest.raises(PunyError) as exc:
+            validate_vault_name("../../etc/passwd")
+        assert exc.value.key == "invalid_vault_name"
+
+    def test_slash_rejected(self):
+        with pytest.raises(PunyError) as exc:
+            validate_vault_name("foo/bar")
+        assert exc.value.key == "invalid_vault_name"
+
+    def test_backslash_rejected(self):
+        with pytest.raises(PunyError):
+            validate_vault_name("foo\\bar")
+
+    def test_leading_dot_rejected(self):
+        with pytest.raises(PunyError):
+            validate_vault_name(".hidden")
+
+    def test_dot_dot_rejected(self):
+        with pytest.raises(PunyError):
+            validate_vault_name("..")
+
+    def test_empty_name_rejected(self):
+        with pytest.raises(PunyError):
+            validate_vault_name("")
+
+    def test_space_rejected(self):
+        with pytest.raises(PunyError):
+            validate_vault_name("has space")
+
+    def test_null_byte_rejected(self):
+        with pytest.raises(PunyError):
+            validate_vault_name("test\x00evil")
+
+    def test_too_long_rejected(self):
+        with pytest.raises(PunyError):
+            validate_vault_name("a" * 65)
+
+    def test_max_length_accepted(self):
+        validate_vault_name("a" * 64)
+
+    def test_vault_path_rejects_traversal(self):
+        with pytest.raises(PunyError):
+            vault_path("../escape")
 
 
 class TestActiveVault:
@@ -323,3 +375,92 @@ class TestCorruption:
         with pytest.raises(PunyError) as exc:
             load_vault("wrong_pass!", name="wpvault")
         assert exc.value.key == "vault_decrypt_failed"
+
+
+class TestDeserialization:
+    def _write_vault_payload(self, monkeypatch, tmp_path, payload_bytes: bytes):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        vaults_dir().mkdir(parents=True, exist_ok=True)
+        salt = generate_salt()
+        key = derive_key("password123!", salt, KDF_ARGON2ID, LEVEL_BALANCED)
+        nonce, ct = encrypt_data(key, payload_bytes)
+        header = MAGIC + bytes([VERSION_1, KDF_ARGON2ID, LEVEL_BALANCED, 0])
+        vault_path("badformat").write_bytes(header + salt + nonce + ct)
+
+    def test_malformed_json_raises_corrupt(self, monkeypatch, tmp_path):
+        self._write_vault_payload(monkeypatch, tmp_path, b"not json {{{")
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="badformat")
+        assert exc.value.key == "vault_corrupt"
+
+    def test_json_array_raises_corrupt(self, monkeypatch, tmp_path):
+        self._write_vault_payload(monkeypatch, tmp_path, b'[1, 2, 3]')
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="badformat")
+        assert exc.value.key == "vault_corrupt"
+
+    def test_missing_entries_key_raises_corrupt(self, monkeypatch, tmp_path):
+        self._write_vault_payload(monkeypatch, tmp_path, json.dumps({"version": 1}).encode())
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="badformat")
+        assert exc.value.key == "vault_corrupt"
+
+    def test_missing_version_key_raises_corrupt(self, monkeypatch, tmp_path):
+        self._write_vault_payload(monkeypatch, tmp_path, json.dumps({"entries": []}).encode())
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="badformat")
+        assert exc.value.key == "vault_corrupt"
+
+    def test_entries_not_a_list_raises_corrupt(self, monkeypatch, tmp_path):
+        self._write_vault_payload(
+            monkeypatch, tmp_path, json.dumps({"version": 1, "entries": "bad"}).encode()
+        )
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="badformat")
+        assert exc.value.key == "vault_corrupt"
+
+    def test_entry_not_a_dict_raises_corrupt(self, monkeypatch, tmp_path):
+        self._write_vault_payload(
+            monkeypatch, tmp_path, json.dumps({"version": 1, "entries": ["string"]}).encode()
+        )
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="badformat")
+        assert exc.value.key == "vault_corrupt"
+
+    def test_entry_missing_required_field_raises_corrupt(self, monkeypatch, tmp_path):
+        self._write_vault_payload(
+            monkeypatch,
+            tmp_path,
+            json.dumps({"version": 1, "entries": [{"name": "x", "username": "u"}]}).encode(),
+        )
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="badformat")
+        assert exc.value.key == "vault_corrupt"
+
+    def test_entry_extra_keys_raises_corrupt(self, monkeypatch, tmp_path):
+        self._write_vault_payload(
+            monkeypatch,
+            tmp_path,
+            json.dumps({
+                "version": 1,
+                "entries": [{"name": "x", "username": "u", "password": "p", "evil": True}],
+            }).encode(),
+        )
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="badformat")
+        assert exc.value.key == "vault_corrupt"
+
+    def test_entry_empty_name_raises_corrupt(self, monkeypatch, tmp_path):
+        self._write_vault_payload(
+            monkeypatch,
+            tmp_path,
+            json.dumps({
+                "version": 1,
+                "entries": [{"name": "", "username": "u", "password": "p"}],
+            }).encode(),
+        )
+        with pytest.raises(PunyError) as exc:
+            load_vault("password123!", name="badformat")
+        assert exc.value.key == "vault_corrupt"

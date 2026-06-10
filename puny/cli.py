@@ -280,18 +280,20 @@ def cmd_edit(args: argparse.Namespace) -> None:
     else:
         password = getpass(f"{t('entry_password')} ({t('leave_empty')}): ")
 
-    notes = input(f"{t('entry_notes')} [{old.notes}]: ").strip()
-    url = input(f"{t('entry_url')} [{old.url}]: ").strip()
-    tags_text = input(f"{t('entry_tags')} [{', '.join(old.tags)}]: ").strip()
+    notes = input(f"{t('entry_notes')} [{old.notes}] ({t('clear_hint')}): ").strip()
+    url = input(f"{t('entry_url')} [{old.url}] ({t('clear_hint')}): ").strip()
+    tags_text = input(
+        f"{t('entry_tags')} [{', '.join(old.tags)}] ({t('clear_hint')}): "
+    ).strip()
     tags = [tag.strip() for tag in tags_text.split(",") if tag.strip()]
 
     new = Entry(
         name=old.name,
         username=username or old.username,
         password=password or old.password,
-        notes=notes or old.notes,
-        url=url or old.url,
-        tags=tags or old.tags,
+        notes="" if notes == "-" else notes or old.notes,
+        url="" if url == "-" else url or old.url,
+        tags=[] if tags_text == "-" else tags or old.tags,
     )
     v.update(old.name, new)
     save_vault(m, v)
@@ -403,8 +405,6 @@ def main() -> None:
         args.func(args)
     except PunyError as e:
         print(t("error_prefix") + t(e.key, **e.kwargs))
-    except Exception as e:
-        print(t("error_prefix") + str(e))
 
 
 if __name__ == "__main__":

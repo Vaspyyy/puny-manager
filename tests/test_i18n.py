@@ -9,21 +9,21 @@ class TestGetLang:
     def test_invalid_lang_file_must_not_crash(self, monkeypatch, tmp_path):
         lang_file = tmp_path / "lang"
         lang_file.write_text("xx")
-        monkeypatch.setattr("puny.i18n.get_lang_path", lambda: lang_file)
+        monkeypatch.setattr("puny.i18n.lang_path", lambda: lang_file)
 
         assert get_lang() == "en"
 
     def test_empty_lang_file_must_not_crash(self, monkeypatch, tmp_path):
         lang_file = tmp_path / "lang"
         lang_file.write_text("")
-        monkeypatch.setattr("puny.i18n.get_lang_path", lambda: lang_file)
+        monkeypatch.setattr("puny.i18n.lang_path", lambda: lang_file)
 
         assert get_lang() == "en"
 
     def test_valid_lang_code_returns_itself(self, monkeypatch, tmp_path):
         lang_file = tmp_path / "lang"
         lang_file.write_text("de")
-        monkeypatch.setattr("puny.i18n.get_lang_path", lambda: lang_file)
+        monkeypatch.setattr("puny.i18n.lang_path", lambda: lang_file)
 
         assert get_lang() == "de"
 
@@ -32,7 +32,7 @@ class TestTranslate:
     def test_t_with_invalid_lang_must_not_key_error(self, monkeypatch, tmp_path):
         lang_file = tmp_path / "lang"
         lang_file.write_text("xx")
-        monkeypatch.setattr("puny.i18n.get_lang_path", lambda: lang_file)
+        monkeypatch.setattr("puny.i18n.lang_path", lambda: lang_file)
 
         result = t("vault_missing")
         assert result == "Vault does not exist."

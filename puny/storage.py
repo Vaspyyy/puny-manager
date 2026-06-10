@@ -1,8 +1,10 @@
 import contextlib
 import json
 import os
+import re
 import shutil
 import tempfile
+from dataclasses import asdict
 from pathlib import Path
 
 from cryptography.exceptions import InvalidTag
@@ -43,7 +45,16 @@ def vaults_dir() -> Path:
     return data_dir() / "vaults"
 
 
+_VAULT_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$")
+
+
+def validate_vault_name(name: str) -> None:
+    if not _VAULT_NAME_RE.match(name):
+        raise PunyError("invalid_vault_name", name=name)
+
+
 def vault_path(name: str) -> Path:
+    validate_vault_name(name)
     return vaults_dir() / f"{name}.puny"
 
 
@@ -78,7 +89,9 @@ def list_vaults() -> list[str]:
     vaults_dir().mkdir(parents=True, exist_ok=True)
     names = []
     for p in sorted(vaults_dir().glob("*.puny")):
-        names.append(p.stem)
+        stem = p.stem
+        if _VAULT_NAME_RE.match(stem):
+            names.append(stem)
     return names
 
 
@@ -106,8 +119,26 @@ def _migrate_legacy_vault() -> bool:
 
 
 def _parse_vault_raw(plaintext: bytes, name: str | None, kdf_id: int, level_id: int) -> Vault:
-    data = json.loads(plaintext.decode())
-    entries = [Entry(**e) for e in data["entries"]]
+    try:
+        data = json.loads(plaintext.decode())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        raise PunyError("vault_corrupt") from None
+
+    if not isinstance(data, dict) or "entries" not in data or "version" not in data:
+        raise PunyError("vault_corrupt")
+
+    if not isinstance(data["entries"], list):
+        raise PunyError("vault_corrupt")
+
+    entries: list[Entry] = []
+    for e in data["entries"]:
+        if not isinstance(e, dict):
+            raise PunyError("vault_corrupt")
+        try:
+            entries.append(Entry(**e))
+        except (TypeError, ValueError, PunyError):
+            raise PunyError("vault_corrupt") from None
+
     return Vault(
         version=data["version"],
         entries=entries,
@@ -202,7 +233,7 @@ def save_vault(master_password: str, vault: Vault) -> None:
 
     payload = {
         "version": vault.version,
-        "entries": [e.__dict__ for e in vault.entries],
+        "entries": [asdict(e) for e in vault.entries],
     }
 
     plaintext = json.dumps(payload).encode()

@@ -25,6 +25,16 @@ class TestEntry:
         assert e.name == "github"
         assert e.tags == ["work", "git"]
 
+    def test_empty_name_raises_puny_error(self):
+        with pytest.raises(PunyError) as exc:
+            Entry(name="", username="u", password="p")
+        assert exc.value.key == "entry_name_required"
+
+    def test_whitespace_only_name_raises_puny_error(self):
+        with pytest.raises(PunyError) as exc:
+            Entry(name="   ", username="u", password="p")
+        assert exc.value.key == "entry_name_required"
+
 
 class TestVault:
     def test_empty_vault(self):
