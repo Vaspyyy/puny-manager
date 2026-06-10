@@ -102,14 +102,15 @@ def cmd_list(args: argparse.Namespace) -> None:
             print(f"- {n}")
 
 
-def _prompt_entry_interactive() -> Entry:
+def _prompt_entry_interactive(password_override: str | None = None) -> Entry:
     name = input(t("entry_name")).strip()
     if not name:
         raise PunyError("entry_name_required")
+    password = password_override or getpass(t("entry_password"))
     return Entry(
         name=name,
         username=input(t("entry_username")).strip(),
-        password=getpass(t("entry_password")),
+        password=password,
         notes=input(t("entry_notes")).strip(),
         url=input(t("entry_url")).strip(),
         tags=[tag.strip() for tag in input(t("entry_tags")).split(",") if tag.strip()],
@@ -120,7 +121,16 @@ def cmd_add(args: argparse.Namespace) -> None:
     name = _require_active_vault()
     m = getpass(t("master_password"))
     v = load_vault(m, name=name)
-    e = _prompt_entry_interactive()
+
+    password_override = None
+    if args.generate:
+        if args.length < 8:
+            raise PunyError("password_length_error")
+        password_override = generate_password(args.length)
+        copy_to_clipboard(password_override)
+        print(t("password_generated", length=args.length))
+
+    e = _prompt_entry_interactive(password_override=password_override)
     v.add(e)
     save_vault(m, v)
     print(t("entry_saved", name=e.name))
@@ -202,7 +212,16 @@ def cmd_edit(args: argparse.Namespace) -> None:
     print(f"{t('editing_entry')} {old.name}")
 
     username = input(f"{t('entry_username')} [{old.username}]: ").strip()
-    password = getpass(f"{t('entry_password')} ({t('leave_empty')}): ")
+
+    if args.generate:
+        if args.length < 8:
+            raise PunyError("password_length_error")
+        password = generate_password(args.length)
+        copy_to_clipboard(password)
+        print(t("password_generated", length=args.length))
+    else:
+        password = getpass(f"{t('entry_password')} ({t('leave_empty')}): ")
+
     notes = input(f"{t('entry_notes')} [{old.notes}]: ").strip()
     url = input(f"{t('entry_url')} [{old.url}]: ").strip()
     tags_text = input(f"{t('entry_tags')} [{', '.join(old.tags)}]: ").strip()
@@ -273,6 +292,8 @@ def main() -> None:
     sp_list.set_defaults(func=cmd_list)
 
     sp_add = sp.add_parser("add", help=t("cmd_add"))
+    sp_add.add_argument("--generate", action="store_true", help=t("arg_generate"))
+    sp_add.add_argument("--length", type=int, default=20, help=t("arg_length"))
     sp_add.set_defaults(func=cmd_add)
 
     sp_get = sp.add_parser("get", help=t("cmd_get"))
@@ -297,6 +318,8 @@ def main() -> None:
 
     sp_edit = sp.add_parser("edit", help=t("cmd_edit"))
     sp_edit.add_argument("name", help=t("arg_name"))
+    sp_edit.add_argument("--generate", action="store_true", help=t("arg_generate"))
+    sp_edit.add_argument("--length", type=int, default=20, help=t("arg_length"))
     sp_edit.set_defaults(func=cmd_edit)
 
     sp_vault = sp.add_parser("vault", help=t("cmd_vault"))

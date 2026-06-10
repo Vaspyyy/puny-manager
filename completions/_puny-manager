@@ -55,6 +55,18 @@ _puny_manager() {
                         '--level[Encryption level]:level:(fast balanced paranoid)' \
                         '--help[Show help]'
                     ;;
+                add)
+                    _arguments \
+                        '--generate[Auto-generate password]' \
+                        '--length[Password length]:length:' \
+                        '--help[Show help]'
+                    ;;
+                edit)
+                    _arguments \
+                        '--generate[Auto-generate password]' \
+                        '--length[Password length]:length:' \
+                        '--help[Show help]'
+                    ;;
                 lang)
                     _values 'language' en de fr es ru pt zh
                     ;;

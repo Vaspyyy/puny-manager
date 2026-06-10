@@ -20,6 +20,9 @@ _puny_manager() {
         create)
             COMPREPLY=($(compgen -W "--level" -- "$cur"))
             ;;
+        add|edit)
+            COMPREPLY=($(compgen -W "--generate --length --help" -- "$cur"))
+            ;;
         get)
             case "$prev" in
                 --timeout)

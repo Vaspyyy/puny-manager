@@ -22,17 +22,12 @@ complete -c puny-manager -n '__fish_seen_subcommand_from create' -l level -d 'En
 complete -c puny-manager -n '__fish_seen_subcommand_from list' -a list -d 'List entries'
 # add
 complete -c puny-manager -n '__fish_seen_subcommand_from add' -a add -d 'Add a new entry'
-# get
-complete -c puny-manager -n '__fish_seen_subcommand_from get' -a get -d 'Show an entry'
-complete -c puny-manager -n '__fish_seen_subcommand_from get' -l timeout -d 'Clipboard clear timeout in seconds'
-# rm
-complete -c puny-manager -n '__fish_seen_subcommand_from rm' -a rm -d 'Remove an entry'
-# gen
-complete -c puny-manager -n '__fish_seen_subcommand_from gen' -a gen -d 'Generate a secure password'
-# passwd
-complete -c puny-manager -n '__fish_seen_subcommand_from passwd' -a passwd -d 'Change master password'
+complete -c puny-manager -n '__fish_seen_subcommand_from add' -l generate -d 'Auto-generate password'
+complete -c puny-manager -n '__fish_seen_subcommand_from add' -l length -d 'Password length'
 # edit
 complete -c puny-manager -n '__fish_seen_subcommand_from edit' -a edit -d 'Edit an entry'
+complete -c puny-manager -n '__fish_seen_subcommand_from edit' -l generate -d 'Auto-generate password'
+complete -c puny-manager -n '__fish_seen_subcommand_from edit' -l length -d 'Password length'
 # lang
 complete -c puny-manager -n '__fish_seen_subcommand_from lang' -a lang -d 'Set language'
 complete -c puny-manager -n '__fish_seen_subcommand_from lang' -a 'en de fr es ru pt zh'

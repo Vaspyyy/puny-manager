@@ -80,6 +80,8 @@ STRINGS = {
         "vault_no_name": "Vault has no name set.",
         "arg_encryption_level": "Encryption level: fast, balanced, or paranoid (default: balanced)",
         "unsupported_kdf": "Unsupported key derivation function {kdf}.",
+        "arg_generate": "Auto-generate password and copy to clipboard",
+        "password_generated": "Password generated ({length} chars) and copied to clipboard.",
     },
     "de": {
         "error_prefix": "✗ Fehler: ",
@@ -151,6 +153,8 @@ STRINGS = {
         "vault_no_name": "Vault hat keinen Namen.",
         "arg_encryption_level": "Verschlüsselungsstufe: fast, balanced oder paranoid (Standard: balanced)",
         "unsupported_kdf": "Nicht unterstützte Schlüsselableitungsfunktion {kdf}.",
+        "arg_generate": "Passwort automatisch generieren und in Zwischenablage kopieren",
+        "password_generated": "Passwort generiert ({length} Zeichen) und in Zwischenablage kopiert.",
     },
     "fr": {
         "error_prefix": "✗ Erreur : ",
@@ -222,6 +226,8 @@ STRINGS = {
         "vault_no_name": "Le coffre n'a pas de nom.",
         "arg_encryption_level": "Niveau de chiffrement : fast, balanced ou paranoid (défaut : balanced)",
         "unsupported_kdf": "Fonction de dérivation de clé non prise en charge {kdf}.",
+        "arg_generate": "Générer automatiquement le mot de passe et copier dans le presse-papiers",
+        "password_generated": "Mot de passe généré ({length} car.) et copié dans le presse-papiers.",
     },
     "es": {
         "error_prefix": "✗ Error: ",
@@ -293,6 +299,8 @@ STRINGS = {
         "vault_no_name": "El cofre no tiene nombre.",
         "arg_encryption_level": "Nivel de cifrado: fast, balanced o paranoid (por defecto: balanced)",
         "unsupported_kdf": "Función de derivación de clave no soportada {kdf}.",
+        "arg_generate": "Generar contraseña automáticamente y copiar al portapapeles",
+        "password_generated": "Contraseña generada ({length} car.) y copiada al portapapeles.",
     },
     "ru": {
         "error_prefix": "✗ Ошибка: ",
@@ -364,6 +372,8 @@ STRINGS = {
         "vault_no_name": "У хранилища нет имени.",
         "arg_encryption_level": "Уровень шифрования: fast, balanced или paranoid (по умолчанию: balanced)",
         "unsupported_kdf": "Неподдерживаемая функция формирования ключа {kdf}.",
+        "arg_generate": "Автоматически сгенерировать пароль и скопировать в буфер обмена",
+        "password_generated": "Пароль сгенерирован ({length} симв.) и скопирован в буфер обмена.",
     },
     "pt": {
         "error_prefix": "✗ Erro: ",
@@ -435,6 +445,8 @@ STRINGS = {
         "vault_no_name": "O cofre não tem nome.",
         "arg_encryption_level": "Nível de encriptação: fast, balanced ou paranoid (padrão: balanced)",
         "unsupported_kdf": "Função de derivação de chave não suportada {kdf}.",
+        "arg_generate": "Gerar senha automaticamente e copiar para área de transferência",
+        "password_generated": "Senha gerada ({length} car.) e copiada para área de transferência.",
     },
     "zh": {
         "error_prefix": "✗ 错误: ",
@@ -506,6 +518,8 @@ STRINGS = {
         "vault_no_name": "密码库没有名称。",
         "arg_encryption_level": "加密等级: fast, balanced 或 paranoid (默认: balanced)",
         "unsupported_kdf": "不支持的密钥派生函数 {kdf}。",
+        "arg_generate": "自动生成密码并复制到剪贴板",
+        "password_generated": "密码已生成 ({length} 字符) 并复制到剪贴板。",
     },
 }
 
