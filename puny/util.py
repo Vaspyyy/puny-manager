@@ -103,6 +103,12 @@ def is_weak_password(password: str) -> bool:
     return not any(c in SYMBOLS for c in password)
 
 
+def filter_by_tag(entries: list[E], tag: str) -> list[E]:
+    if not tag:
+        return entries
+    return [e for e in entries if tag in e.tags]
+
+
 def analyze_passwords(entries: list[Entry]) -> dict:
     total = len(entries)
     if total == 0:

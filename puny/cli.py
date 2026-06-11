@@ -4,8 +4,9 @@ import subprocess
 from getpass import getpass
 from pathlib import Path
 
+from .config import get_config, set_config
 from .crypto import KDF_ARGON2ID, LEVEL_BALANCED, LEVEL_FAST, LEVEL_PARANOID
-from .export import export_json, import_json
+from .export import export_json, import_csv, import_json
 from .i18n import STRINGS, get_lang, t
 from .storage import (
     config_dir,
@@ -110,12 +111,16 @@ def cmd_list(args: argparse.Namespace) -> None:
     name = _require_active_vault()
     m = _get_master_password(args)
     v = load_vault(m, name=name)
-    if not v.entries:
+    entries = v.entries
+    if hasattr(args, "tag") and args.tag:
+        from .util import filter_by_tag
+        entries = filter_by_tag(entries, args.tag)
+    if not entries:
         print(t("no_entries"))
     else:
         print(t("stored_entries"))
-        for n in v.list():
-            print(f"- {n}")
+        for e in entries:
+            print(f"- {e.name}")
 
 
 def _prompt_entry_interactive(password_override: str | None = None) -> Entry:
@@ -441,8 +446,22 @@ def cmd_import(args: argparse.Namespace) -> None:
     name = _require_active_vault()
     m = _get_master_password(args)
     import_path = Path(args.input)
-    import_json(m, name, import_path)
+
+    if args.csv:
+        import_csv(m, name, import_path)
+    else:
+        import_json(m, name, import_path)
     print(t("import_success"))
+
+
+def cmd_config(args: argparse.Namespace) -> None:
+    if args.key and args.value:
+        set_config(args.key, int(args.value))
+        print(t("config_set", key=args.key, value=args.value))
+    else:
+        config = get_config()
+        for key, value in config.items():
+            print(f"{key}: {value}")
 
 
 def main() -> None:
@@ -468,6 +487,7 @@ def main() -> None:
 
     sp_list = sp.add_parser("list", help=t("cmd_list"))
     sp_list.add_argument("--master-password", help=t("arg_master_password"))
+    sp_list.add_argument("--tag", help=t("arg_tag"))
     sp_list.set_defaults(func=cmd_list)
 
     sp_add = sp.add_parser("add", help=t("cmd_add"))
@@ -542,12 +562,19 @@ def main() -> None:
     sp_export = sp.add_parser("export", help=t("cmd_export"))
     sp_export.add_argument("output", help=t("arg_export_output"))
     sp_export.add_argument("--master-password", help=t("arg_master_password"))
+    sp_export.add_argument("--csv", action="store_true", help=t("arg_csv"))
     sp_export.set_defaults(func=cmd_export)
 
     sp_import = sp.add_parser("import", help=t("cmd_import"))
     sp_import.add_argument("input", help=t("arg_import_input"))
     sp_import.add_argument("--master-password", help=t("arg_master_password"))
+    sp_import.add_argument("--csv", action="store_true", help=t("arg_csv"))
     sp_import.set_defaults(func=cmd_import)
+
+    sp_config = sp.add_parser("config", help=t("cmd_config"))
+    sp_config.add_argument("key", nargs="?", help=t("arg_config_key"))
+    sp_config.add_argument("value", nargs="?", help=t("arg_config_value"))
+    sp_config.set_defaults(func=cmd_config)
 
     args = p.parse_args()
 

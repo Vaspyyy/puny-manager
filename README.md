@@ -147,9 +147,19 @@ Export vault to JSON:
 puny-manager export vault.json
 ```
 
+Export vault to CSV:
+```bash
+puny-manager export vault.csv --csv
+```
+
 Import vault from JSON:
 ```bash
 puny-manager import vault.json
+```
+
+Import vault from CSV:
+```bash
+puny-manager import vault.csv --csv
 ```
 
 ### Custom Fields
@@ -163,6 +173,27 @@ puny-manager add
 Edit custom fields:
 ```bash
 puny-manager edit <name>
+```
+
+### Tags Filtering
+
+List entries filtered by tag:
+```bash
+puny-manager list --tag work
+```
+
+### Configuration
+
+View current configuration:
+```bash
+puny-manager config
+```
+
+Set configuration values:
+```bash
+puny-manager config default_length 32
+puny-manager config backup_count 10
+puny-manager config clipboard_timeout 30
 ```
 
 ### Backups

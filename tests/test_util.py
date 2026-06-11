@@ -3,6 +3,7 @@ import pytest
 from puny.util import (
     analyze_passwords,
     check_master_password,
+    filter_by_tag,
     generate_password,
     is_weak_password,
     smart_find,
@@ -256,3 +257,31 @@ class TestAnalyzePasswords:
         result = analyze_passwords(entries)
         assert result["unique_count"] == 2
         assert len(result["duplicate_sets"]) == 2
+
+
+class TestFilterByTag:
+    def test_filter_by_tag(self):
+        entries = [
+            Entry(name="github", username="u", password="p", tags=["work", "git"]),
+            Entry(name="reddit", username="u", password="p", tags=["personal"]),
+            Entry(name="gitlab", username="u", password="p", tags=["work"]),
+        ]
+        result = filter_by_tag(entries, "work")
+        assert len(result) == 2
+        assert result[0].name == "github"
+        assert result[1].name == "gitlab"
+
+    def test_filter_no_match(self):
+        entries = [
+            Entry(name="github", username="u", password="p", tags=["work"]),
+            Entry(name="reddit", username="u", password="p", tags=["personal"]),
+        ]
+        result = filter_by_tag(entries, "nonexistent")
+        assert len(result) == 0
+
+    def test_filter_empty_tag(self):
+        entries = [
+            Entry(name="github", username="u", password="p", tags=["work"]),
+        ]
+        result = filter_by_tag(entries, "")
+        assert len(result) == 1

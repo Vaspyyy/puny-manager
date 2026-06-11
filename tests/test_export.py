@@ -1,10 +1,11 @@
+import csv
 import json
 import os
 from pathlib import Path
 
 import pytest
 
-from puny.export import export_json, import_json
+from puny.export import export_csv, export_json, import_csv, import_json
 from puny.storage import create_vault, load_vault, save_vault, vault_path
 from puny.vault import Entry, PunyError
 
@@ -133,3 +134,101 @@ class TestImportJson:
         with pytest.raises(PunyError) as exc:
             import_json("password123!", "import_test", export_path)
         assert exc.value.key == "invalid_export_format"
+
+
+class TestExportCsv:
+    def test_export_empty_vault(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        create_vault("password123!", "csv_export_test")
+        export_path = tmp_path / "export.csv"
+
+        export_csv("password123!", "csv_export_test", export_path)
+
+        assert export_path.exists()
+        reader = csv.DictReader(open(export_path))
+        assert reader.fieldnames == ["name", "username", "password", "notes", "url", "tags", "custom_fields"]
+        rows = list(reader)
+        assert len(rows) == 0
+
+    def test_export_vault_with_entries(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        create_vault("password123!", "csv_export_test")
+        vault = load_vault("password123!", name="csv_export_test")
+        vault.add(Entry(
+            name="github",
+            username="dev",
+            password="secret",
+            notes="work account",
+            url="https://github.com",
+            tags=["work", "git"],
+            custom_fields={"api_key": "abc123"},
+        ))
+        save_vault("password123!", vault)
+
+        export_path = tmp_path / "export.csv"
+        export_csv("password123!", "csv_export_test", export_path)
+
+        reader = csv.DictReader(open(export_path))
+        rows = list(reader)
+        assert len(rows) == 1
+        row = rows[0]
+        assert row["name"] == "github"
+        assert row["username"] == "dev"
+        assert row["password"] == "secret"
+        assert row["notes"] == "work account"
+        assert row["url"] == "https://github.com"
+        assert row["tags"] == "work,git"
+        assert row["custom_fields"] == '{"api_key": "abc123"}'
+
+
+class TestImportCsv:
+    def test_import_empty_csv(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        export_path = tmp_path / "export.csv"
+        with open(export_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["name", "username", "password", "notes", "url", "tags", "custom_fields"])
+            writer.writeheader()
+
+        create_vault("password123!", "csv_import_test")
+        import_csv("password123!", "csv_import_test", export_path)
+
+        vault = load_vault("password123!", name="csv_import_test")
+        assert len(vault.entries) == 0
+
+    def test_import_csv_with_entries(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        export_path = tmp_path / "export.csv"
+        with open(export_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["name", "username", "password", "notes", "url", "tags", "custom_fields"])
+            writer.writeheader()
+            writer.writerow({
+                "name": "github",
+                "username": "dev",
+                "password": "secret",
+                "notes": "work account",
+                "url": "https://github.com",
+                "tags": "work,git",
+                "custom_fields": '{"api_key": "abc123"}',
+            })
+
+        create_vault("password123!", "csv_import_test")
+        import_csv("password123!", "csv_import_test", export_path)
+
+        vault = load_vault("password123!", name="csv_import_test")
+        assert len(vault.entries) == 1
+        entry = vault.entries[0]
+        assert entry.name == "github"
+        assert entry.username == "dev"
+        assert entry.password == "secret"
+        assert entry.notes == "work account"
+        assert entry.url == "https://github.com"
+        assert entry.tags == ["work", "git"]
+        assert entry.custom_fields == {"api_key": "abc123"}
