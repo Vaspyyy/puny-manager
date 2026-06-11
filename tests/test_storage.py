@@ -464,3 +464,52 @@ class TestDeserialization:
         with pytest.raises(PunyError) as exc:
             load_vault("password123!", name="badformat")
         assert exc.value.key == "vault_corrupt"
+
+
+class TestRotatingBackups:
+    def test_backup_created_on_save(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        create_vault("password123!", "backup_test")
+        vault = load_vault("password123!", name="backup_test")
+        vault.add(Entry(name="test", username="u", password="p"))
+        save_vault("password123!", vault)
+
+        backup_path = vault_path("backup_test").with_suffix(".puny.bak.1")
+        assert backup_path.exists()
+
+    def test_rotating_backups_created(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        create_vault("password123!", "rotate_test")
+        
+        for i in range(7):
+            vault = load_vault("password123!", name="rotate_test")
+            vault.add(Entry(name=f"entry_{i}", username="u", password="p"))
+            save_vault("password123!", vault)
+
+        vault_dir = vault_path("rotate_test").parent
+        backups = sorted(vault_dir.glob("rotate_test.puny.bak.*"))
+        assert len(backups) == 5
+        assert backups[0].name == "rotate_test.puny.bak.1"
+        assert backups[4].name == "rotate_test.puny.bak.5"
+
+    def test_backup_rotation_preserves_order(self, monkeypatch, tmp_path):
+        monkeypatch.setattr("puny.storage._xdg_data", lambda: tmp_path)
+        monkeypatch.setattr("puny.storage._xdg_config", lambda: tmp_path)
+
+        create_vault("password123!", "order_test")
+        
+        for i in range(3):
+            vault = load_vault("password123!", name="order_test")
+            vault.add(Entry(name=f"entry_{i}", username="u", password="p"))
+            save_vault("password123!", vault)
+
+        vault_dir = vault_path("order_test").parent
+        backups = sorted(vault_dir.glob("order_test.puny.bak.*"))
+        assert len(backups) == 3
+        assert backups[0].name == "order_test.puny.bak.1"
+        assert backups[1].name == "order_test.puny.bak.2"
+        assert backups[2].name == "order_test.puny.bak.3"

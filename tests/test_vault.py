@@ -104,3 +104,43 @@ class TestVault:
         with pytest.raises(PunyError):
             v.update("a", Entry(name="b", username="u", password="p"))
         assert v.get("a").name == "a"
+
+
+class TestCustomFields:
+    def test_entry_with_custom_fields(self):
+        e = Entry(
+            name="test",
+            username="user",
+            password="pass",
+            custom_fields={"api_key": "abc123", "recovery_code": "xyz"},
+        )
+        assert e.custom_fields == {"api_key": "abc123", "recovery_code": "xyz"}
+
+    def test_entry_without_custom_fields(self):
+        e = Entry(name="test", username="user", password="pass")
+        assert e.custom_fields == {}
+
+    def test_custom_fields_survive_vault_operations(self):
+        v = Vault()
+        e = Entry(
+            name="test",
+            username="user",
+            password="pass",
+            custom_fields={"key": "value"},
+        )
+        v.add(e)
+        assert v.get("test").custom_fields == {"key": "value"}
+
+    def test_update_entry_with_custom_fields(self):
+        v = Vault()
+        v.add(Entry(name="test", username="user", password="pass"))
+        v.update(
+            "test",
+            Entry(
+                name="test",
+                username="user",
+                password="pass",
+                custom_fields={"new_key": "new_value"},
+            ),
+        )
+        assert v.get("test").custom_fields == {"new_key": "new_value"}

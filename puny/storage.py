@@ -221,6 +221,22 @@ def load_vault(master_password: str, name: str | None = None) -> Vault:
     return _load_legacy_format(raw, master_password, name)
 
 
+def rotate_backups(vault_path: Path, max_backups: int = 5) -> None:
+    vault_dir = vault_path.parent
+    vault_name = vault_path.stem
+    vault_ext = vault_path.suffix
+
+    for i in range(max_backups - 1, 0, -1):
+        old_backup = vault_dir / f"{vault_name}{vault_ext}.bak.{i}"
+        new_backup = vault_dir / f"{vault_name}{vault_ext}.bak.{i + 1}"
+        if old_backup.exists():
+            shutil.move(str(old_backup), str(new_backup))
+
+    if vault_path.exists():
+        backup_path = vault_dir / f"{vault_name}{vault_ext}.bak.1"
+        shutil.copy2(str(vault_path), str(backup_path))
+
+
 def save_vault(master_password: str, vault: Vault) -> None:
     vaults_dir().mkdir(parents=True, exist_ok=True)
     os.chmod(vaults_dir(), 0o700)
@@ -243,9 +259,7 @@ def save_vault(master_password: str, vault: Vault) -> None:
     blob = header + salt + nonce + ciphertext
 
     path = vault_path(vault.name)
-    if path.exists():
-        backup = path.with_suffix(path.suffix + ".bak")
-        shutil.copy2(path, backup)
+    rotate_backups(path)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_path = tempfile.mkstemp(prefix=path.name, suffix=".tmp", dir=path.parent)

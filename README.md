@@ -139,3 +139,33 @@ puny-manager stats
 ```
 Shows entry count, weak passwords, duplicate detection, and tag breakdown
 without revealing any actual passwords.
+
+### Export/Import
+
+Export vault to JSON:
+```bash
+puny-manager export vault.json
+```
+
+Import vault from JSON:
+```bash
+puny-manager import vault.json
+```
+
+### Custom Fields
+
+Add entries with custom key-value fields:
+```bash
+puny-manager add
+# When prompted: Custom fields (key=value, comma-separated, optional): api_key=abc123, recovery_code=xyz
+```
+
+Edit custom fields:
+```bash
+puny-manager edit <name>
+```
+
+### Backups
+
+Vaults are automatically backed up before each save with rotating backups (5 by default).
+Backups are stored as `vault-name.puny.bak.1`, `vault-name.puny.bak.2`, etc.

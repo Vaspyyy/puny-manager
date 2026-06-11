@@ -20,6 +20,7 @@ class Entry:
     notes: str = ""
     url: str = ""
     tags: list[str] = field(default_factory=list)
+    custom_fields: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.name.strip():
