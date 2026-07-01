@@ -1,0 +1,30 @@
+puny/i18n.py
+  s_a02ae4bf0a82e3::t_0a9244c43652d7 409
+  s_a02ae4bf0a82e3::t_7ac70df2cca58e 295
+  s_a02ae4bf0a82e3::t_54ee8983803c53 751
+  s_a02ae4bf0a82e3::t_8122af1a3d419f 637
+  s_a02ae4bf0a82e3::t_bbb17c177a813e 181
+  s_a02ae4bf0a82e3::t_1b8b15f88d9737 523
+  s_a02ae4bf0a82e3::t_deeb374e9fc77d 67
+pyproject.toml
+  s_a02ae4bf0a82e3::t_f5a2ab553d5a81 7
+puny/cli.py
+  s_a02ae4bf0a82e3::t_667adb543912e0 215-217
+  s_a02ae4bf0a82e3::t_a8cadefd456a7b 512
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.5",
+  "base_commit_sha": "253b11e682513dc477ccd74793428ee19caa3d86",
+  "prompts": {},
+  "sessions": {
+    "s_a02ae4bf0a82e3": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_0e2fad27dffe46kjRn1J1eVRbP",
+        "model": "unknown"
+      },
+      "human_author": "Vaspyyy <lolbautz2@gmail.com>"
+    }
+  }
+}
