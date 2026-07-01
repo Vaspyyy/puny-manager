@@ -212,6 +212,9 @@ def cmd_get(args: argparse.Namespace) -> None:
         print(f"URL: {e.url}")
     if e.tags:
         print(f"Tags: {', '.join(e.tags)}")
+    if args.show:
+        print(f"Password: {e.password}")
+
     if not copy_to_clipboard(e.password):
         raise PunyError("clipboard_unavailable")
 
@@ -506,6 +509,7 @@ def main() -> None:
     sp_get = sp.add_parser("get", help=t("cmd_get"))
     sp_get.add_argument("name", help=t("arg_name"))
     sp_get.add_argument("--timeout", type=int, default=15, help=t("arg_timeout"))
+    sp_get.add_argument("-s", "--show", action="store_true", help=t("arg_show"))
     sp_get.add_argument("--master-password", help=t("arg_master_password"))
     sp_get.set_defaults(func=cmd_get)
 

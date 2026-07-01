@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "puny-manager"
-version = "2.2.0"
+version = "2.2.1"
 description = "Puny Manager – minimal password manager"
 requires-python = ">=3.10"
 dependencies = [
