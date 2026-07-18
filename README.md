@@ -3,7 +3,7 @@
 Puny Manager is a minimal, local, CLI password manager for Linux.
 
 It stores all passwords in a single encrypted vault file protected by a master password.
-The vault is fully encrypted and unreadable without the master password.
+Enrolled vaults may also be unlocked through a TPM-backed Howdy credential.
 
 Note: To use clipboard feature you need wl-clipboard (wayland) or xclip (x11)
 
@@ -13,8 +13,9 @@ Note: To use clipboard feature you need wl-clipboard (wayland) or xclip (x11)
 - Key derivation: Argon2id (with legacy PBKDF2-HMAC-SHA256 support)
 - Configurable encryption level: fast (32MB), balanced (64MB, default), paranoid (256MB)
 - Versioned binary format with header validation
-- Every command requires the master password
-- No unlocked session or caching
+- Every protected command authenticates independently
+- Optional Howdy facial unlock with master-password recovery (Arch system package)
+- No unlocked session or authentication caching
 - The vault file is binary and unreadable if opened directly
 - Automatic backup on save (`vault.puny.bak`)
 
@@ -28,6 +29,9 @@ Using pipx:
 ```bash
 pipx install git+https://github.com/Vaspyyy/puny-manager.git
 ```
+
+The pipx installation is password-only. Facial unlock requires the root-owned
+system integration shipped by the Arch/AUR package.
 
 ## Updating
 If installed via aur:
@@ -90,6 +94,49 @@ puny-manager vault list            # list all vaults (* = active)
 puny-manager vault switch <name>   # change active vault
 puny-manager vault delete <name>   # remove a vault
 ```
+
+### Howdy facial unlock
+
+Howdy support is optional, Linux-only, and configured separately for each vault.
+It requires Howdy, TPM 2.0, `python-pam`, and the Arch system package assets.
+
+Enable the one-shot authentication socket once:
+
+```bash
+sudo systemctl enable --now puny-manager-howdy.socket
+```
+
+Then enroll the active vault:
+
+```bash
+puny-manager howdy test
+puny-manager howdy enable
+puny-manager howdy status
+```
+
+Protected commands now try facial recognition first and fall back to the master
+password on failure. Supplying `--master-password` bypasses Howdy. Disable it
+and return the vault to the password-only format with:
+
+```bash
+puny-manager howdy disable
+```
+
+The master password remains required for enrollment, removal, recovery, and
+password changes. TPM loss, a broken camera, or a missing helper never prevents
+master-password recovery. Facial unlock does not protect against root compromise,
+a compromised running session, or same-user malware that waits for a successful
+face check.
+
+Arch packagers install the files from `packaging/arch/` as follows:
+
+- `puny-manager-howdy.socket` and `puny-manager-howdy@.service` into
+  `/usr/lib/systemd/system/`
+- `puny-manager-howdy.pam` as `/etc/pam.d/puny-manager-howdy`
+- `puny-manager.tmpfiles` as `/usr/lib/tmpfiles.d/puny-manager.conf`
+
+The package should list Howdy and `python-pam` as optional dependencies and run
+`systemd-tmpfiles --create puny-manager.conf` during installation.
 
 ### Passwords & entries
 

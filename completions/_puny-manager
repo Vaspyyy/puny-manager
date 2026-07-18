@@ -27,6 +27,7 @@ _puny_manager() {
                 'edit:Edit an entry'
                 'lang:Set language'
                 'vault:Manage vaults'
+                'howdy:Manage facial unlock'
             )
             _describe -t commands 'subcommand' cmds
             ;;
@@ -45,6 +46,11 @@ _puny_manager() {
                             _describe -t commands 'vault command' vcmds
                             ;;
                     esac
+                    ;;
+                howdy)
+                    _arguments \
+                        '1:howdy command:(enable disable status test)' \
+                        '--master-password[Master password (non-interactive)]:password:'
                     ;;
                 get)
                     _arguments \

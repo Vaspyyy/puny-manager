@@ -4,7 +4,8 @@ import os
 import re
 import shutil
 import tempfile
-from dataclasses import asdict
+import uuid
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from cryptography.exceptions import InvalidTag
@@ -17,14 +18,25 @@ from .crypto import (
     PRESETS,
     SUPPORTED_KDFS,
     VERSION_1,
+    VERSION_2,
     decrypt_data,
     derive_key,
     encrypt_data,
+    generate_key,
     generate_salt,
 )
 from .vault import Entry, PunyError, Vault
 
 APP_NAME = "puny-manager"
+FLAG_HOWDY = 0x01
+V2_HEADER_SIZE = 112
+
+
+@dataclass(frozen=True)
+class VaultHeader:
+    format_version: int
+    howdy_enabled: bool
+    vault_id: bytes | None = None
 
 
 def _xdg_data() -> Path:
@@ -175,6 +187,62 @@ def _load_new_format(raw: bytes, password: str, name: str | None) -> Vault:
     return _parse_vault_raw(plaintext, name, kdf_id, level_id)
 
 
+def _parse_v2_header(raw: bytes) -> tuple[int, int, bytes, bytes, bytes, bytes, bytes]:
+    if len(raw) < V2_HEADER_SIZE + 16:
+        raise PunyError("vault_corrupt")
+
+    kdf_id = raw[5]
+    level_id = raw[6]
+    flags = raw[7]
+    if kdf_id not in SUPPORTED_KDFS:
+        raise PunyError("unsupported_kdf", kdf=kdf_id)
+    if kdf_id == KDF_ARGON2ID and level_id not in PRESETS:
+        raise PunyError("vault_corrupt")
+    if flags != FLAG_HOWDY:
+        raise PunyError("vault_corrupt")
+
+    vault_id = raw[8:24]
+    if len(vault_id) != 16 or vault_id == bytes(16):
+        raise PunyError("vault_corrupt")
+    return (
+        kdf_id,
+        level_id,
+        vault_id,
+        raw[24:40],
+        raw[40:52],
+        raw[52:100],
+        raw[100:112],
+    )
+
+
+def _load_v2_with_key(raw: bytes, data_key: bytes, name: str | None) -> Vault:
+    if len(data_key) != 32:
+        raise PunyError("vault_decrypt_failed")
+    kdf_id, level_id, vault_id, salt, wrap_nonce, wrapped_key, data_nonce = _parse_v2_header(raw)
+    try:
+        plaintext = decrypt_data(data_key, data_nonce, raw[V2_HEADER_SIZE:], raw[:100])
+    except InvalidTag:
+        raise PunyError("vault_decrypt_failed") from None
+    vault = _parse_vault_raw(plaintext, name, kdf_id, level_id)
+    vault.format_version = VERSION_2
+    vault.vault_id = vault_id
+    vault.data_key = data_key
+    vault.wrap_salt = salt
+    vault.wrap_nonce = wrap_nonce
+    vault.wrapped_key = wrapped_key
+    return vault
+
+
+def _load_v2_with_password(raw: bytes, password: str, name: str | None) -> Vault:
+    kdf_id, level_id, _vault_id, salt, wrap_nonce, wrapped_key, _data_nonce = _parse_v2_header(raw)
+    wrapping_key = derive_key(password, salt, kdf_id, level_id)
+    try:
+        data_key = decrypt_data(wrapping_key, wrap_nonce, wrapped_key, raw[:40])
+    except InvalidTag:
+        raise PunyError("vault_decrypt_failed") from None
+    return _load_v2_with_key(raw, data_key, name)
+
+
 def _load_legacy_format(raw: bytes, password: str, name: str | None) -> Vault:
     if len(raw) < 28:
         raise PunyError("vault_corrupt")
@@ -217,8 +285,43 @@ def load_vault(master_password: str, name: str | None = None) -> Vault:
         raise PunyError("vault_corrupt")
 
     if raw[:4] == MAGIC:
-        return _load_new_format(raw, master_password, name)
+        if len(raw) < 8:
+            raise PunyError("vault_corrupt")
+        if raw[4] == VERSION_1:
+            return _load_new_format(raw, master_password, name)
+        if raw[4] == VERSION_2:
+            return _load_v2_with_password(raw, master_password, name)
+        raise PunyError("unsupported_version", version=raw[4])
     return _load_legacy_format(raw, master_password, name)
+
+
+def load_vault_with_key(data_key: bytes, name: str | None = None) -> Vault:
+    if name is None:
+        name = get_active_vault()
+        if name is None:
+            raise PunyError("no_active_vault")
+    raw = vault_path(name).read_bytes()
+    if len(raw) < 8 or raw[:4] != MAGIC or raw[4] != VERSION_2:
+        raise PunyError("vault_decrypt_failed")
+    return _load_v2_with_key(raw, data_key, name)
+
+
+def read_vault_header(name: str) -> VaultHeader:
+    raw = vault_path(name).read_bytes()
+    if raw[:4] != MAGIC:
+        return VaultHeader(format_version=0, howdy_enabled=False)
+    if len(raw) < 8:
+        raise PunyError("vault_corrupt")
+    if raw[4] == VERSION_1:
+        return VaultHeader(format_version=VERSION_1, howdy_enabled=False)
+    if raw[4] == VERSION_2:
+        _kdf, _level, vault_id, *_rest = _parse_v2_header(raw)
+        return VaultHeader(
+            format_version=VERSION_2,
+            howdy_enabled=True,
+            vault_id=vault_id,
+        )
+    raise PunyError("unsupported_version", version=raw[4])
 
 
 def rotate_backups(vault_path: Path, max_backups: int = 5) -> None:
@@ -237,30 +340,17 @@ def rotate_backups(vault_path: Path, max_backups: int = 5) -> None:
         shutil.copy2(str(vault_path), str(backup_path))
 
 
-def save_vault(master_password: str, vault: Vault) -> None:
-    vaults_dir().mkdir(parents=True, exist_ok=True)
-    os.chmod(vaults_dir(), 0o700)
+def _vault_payload(vault: Vault) -> bytes:
+    return json.dumps(
+        {
+            "version": vault.version,
+            "entries": [asdict(e) for e in vault.entries],
+        }
+    ).encode()
 
-    if vault.name is None:
-        raise PunyError("vault_no_name")
 
-    salt = generate_salt()
-    key = derive_key(master_password, salt, vault.kdf_id, vault.level_id)
-
-    payload = {
-        "version": vault.version,
-        "entries": [asdict(e) for e in vault.entries],
-    }
-
-    plaintext = json.dumps(payload).encode()
-    nonce, ciphertext = encrypt_data(key, plaintext)
-
-    header = MAGIC + bytes([VERSION_1, vault.kdf_id, vault.level_id, 0])
-    blob = header + salt + nonce + ciphertext
-
-    path = vault_path(vault.name)
+def _write_vault_blob(path: Path, blob: bytes) -> None:
     rotate_backups(path)
-
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_path = tempfile.mkstemp(prefix=path.name, suffix=".tmp", dir=path.parent)
     try:
@@ -273,6 +363,93 @@ def save_vault(master_password: str, vault: Vault) -> None:
     finally:
         with contextlib.suppress(OSError):
             os.unlink(tmp_path)
+
+
+def _build_v1_blob(master_password: str, vault: Vault) -> bytes:
+    salt = generate_salt()
+    key = derive_key(master_password, salt, vault.kdf_id, vault.level_id)
+    nonce, ciphertext = encrypt_data(key, _vault_payload(vault))
+    header = MAGIC + bytes([VERSION_1, vault.kdf_id, vault.level_id, 0])
+    return header + salt + nonce + ciphertext
+
+
+def _build_v2_blob(master_password: str | None, vault: Vault) -> bytes:
+    if vault.vault_id is None or len(vault.vault_id) != 16:
+        raise PunyError("vault_corrupt")
+    if vault.data_key is None or len(vault.data_key) != 32:
+        raise PunyError("vault_decrypt_failed")
+
+    prefix = MAGIC + bytes([VERSION_2, vault.kdf_id, vault.level_id, FLAG_HOWDY]) + vault.vault_id
+    if master_password is not None:
+        salt = generate_salt()
+        wrapping_key = derive_key(master_password, salt, vault.kdf_id, vault.level_id)
+        wrap_nonce, wrapped_key = encrypt_data(wrapping_key, vault.data_key, prefix + salt)
+        vault.wrap_salt = salt
+        vault.wrap_nonce = wrap_nonce
+        vault.wrapped_key = wrapped_key
+
+    if (
+        vault.wrap_salt is None
+        or len(vault.wrap_salt) != 16
+        or vault.wrap_nonce is None
+        or len(vault.wrap_nonce) != 12
+        or vault.wrapped_key is None
+        or len(vault.wrapped_key) != 48
+    ):
+        raise PunyError("vault_corrupt")
+
+    authenticated_header = prefix + vault.wrap_salt + vault.wrap_nonce + vault.wrapped_key
+    data_nonce, ciphertext = encrypt_data(
+        vault.data_key, _vault_payload(vault), authenticated_header
+    )
+    return authenticated_header + data_nonce + ciphertext
+
+
+def save_vault(master_password: str | None, vault: Vault) -> None:
+    vaults_dir().mkdir(parents=True, exist_ok=True)
+    os.chmod(vaults_dir(), 0o700)
+
+    if vault.name is None:
+        raise PunyError("vault_no_name")
+
+    path = vault_path(vault.name)
+    if vault.format_version == VERSION_2:
+        blob = _build_v2_blob(master_password, vault)
+    else:
+        if master_password is None:
+            raise PunyError("master_password_required")
+        blob = _build_v1_blob(master_password, vault)
+    _write_vault_blob(path, blob)
+
+
+def prepare_howdy_enrollment(master_password: str, name: str) -> Vault:
+    vault = load_vault(master_password, name=name)
+    if vault.format_version == VERSION_2:
+        return vault
+    vault.format_version = VERSION_2
+    vault.vault_id = uuid.uuid4().bytes
+    vault.data_key = generate_key()
+    vault.wrap_salt = None
+    vault.wrap_nonce = None
+    vault.wrapped_key = None
+    # Build once in memory so invalid KDF metadata is rejected before authentication.
+    _build_v2_blob(master_password, vault)
+    return vault
+
+
+def disable_howdy_vault(master_password: str, name: str) -> bytes:
+    vault = load_vault(master_password, name=name)
+    if vault.format_version != VERSION_2 or vault.vault_id is None:
+        raise PunyError("howdy_not_enabled")
+    old_vault_id = vault.vault_id
+    vault.format_version = VERSION_1
+    vault.vault_id = None
+    vault.data_key = None
+    vault.wrap_salt = None
+    vault.wrap_nonce = None
+    vault.wrapped_key = None
+    _write_vault_blob(vault_path(name), _build_v1_blob(master_password, vault))
+    return old_vault_id
 
 
 def create_vault(master_password: str, name: str, level_id: int = LEVEL_BALANCED) -> Vault:

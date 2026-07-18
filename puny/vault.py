@@ -34,6 +34,12 @@ class Vault:
     name: str | None = field(default=None, repr=False)
     kdf_id: int = field(default=KDF_ARGON2ID, repr=False)
     level_id: int = field(default=LEVEL_BALANCED, repr=False)
+    format_version: int = field(default=1, repr=False)
+    vault_id: bytes | None = field(default=None, repr=False)
+    data_key: bytes | None = field(default=None, repr=False)
+    wrap_salt: bytes | None = field(default=None, repr=False)
+    wrap_nonce: bytes | None = field(default=None, repr=False)
+    wrapped_key: bytes | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         if self.version not in SUPPORTED_VERSIONS:

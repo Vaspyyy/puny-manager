@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 MAGIC = b"PUNY"
 VERSION_1 = 1
+VERSION_2 = 2
 
 KDF_ARGON2ID = 1
 KDF_PBKDF2 = 2
@@ -59,12 +60,16 @@ def derive_key_legacy(password: str, salt: bytes) -> bytes:
     return derive_key(password, salt, KDF_PBKDF2, 0)
 
 
-def encrypt_data(key: bytes, plaintext: bytes) -> tuple[bytes, bytes]:
+def generate_key(length: int = 32) -> bytes:
+    return os.urandom(length)
+
+
+def encrypt_data(key: bytes, plaintext: bytes, aad: bytes | None = None) -> tuple[bytes, bytes]:
     nonce = os.urandom(12)
     aes = AESGCM(key)
-    return nonce, aes.encrypt(nonce, plaintext, None)
+    return nonce, aes.encrypt(nonce, plaintext, aad)
 
 
-def decrypt_data(key: bytes, nonce: bytes, ciphertext: bytes) -> bytes:
+def decrypt_data(key: bytes, nonce: bytes, ciphertext: bytes, aad: bytes | None = None) -> bytes:
     aes = AESGCM(key)
-    return aes.decrypt(nonce, ciphertext, None)
+    return aes.decrypt(nonce, ciphertext, aad)

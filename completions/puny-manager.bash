@@ -7,7 +7,7 @@ _puny_manager() {
     _init_completion || return
 
     if ((cword == 1)); then
-        COMPREPLY=($(compgen -W "create list add get rm stats gen passwd edit lang vault --version --help" -- "$cur"))
+        COMPREPLY=($(compgen -W "create list add get rm stats gen passwd edit lang vault howdy --version --help" -- "$cur"))
         return
     fi
 
@@ -15,6 +15,13 @@ _puny_manager() {
         vault)
             if ((cword == 2)); then
                 COMPREPLY=($(compgen -W "list switch delete" -- "$cur"))
+            fi
+            ;;
+        howdy)
+            if ((cword == 2)); then
+                COMPREPLY=($(compgen -W "enable disable status test" -- "$cur"))
+            elif [[ "${words[2]}" == "enable" || "${words[2]}" == "disable" ]]; then
+                COMPREPLY=($(compgen -W "--master-password --help" -- "$cur"))
             fi
             ;;
         create)

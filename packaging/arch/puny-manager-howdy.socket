@@ -1,0 +1,12 @@
+[Unit]
+Description=Puny Manager Howdy authentication socket
+
+[Socket]
+ListenStream=/run/puny-manager/howdy.sock
+SocketMode=0666
+DirectoryMode=0755
+Accept=yes
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target

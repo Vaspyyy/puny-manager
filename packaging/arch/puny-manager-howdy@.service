@@ -1,0 +1,21 @@
+[Unit]
+Description=Puny Manager one-shot Howdy authentication helper
+Requires=puny-manager-howdy.socket
+
+[Service]
+Type=exec
+User=root
+Group=root
+ExecStart=/usr/bin/python -I -m puny.howdy_helper
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/puny-manager/howdy
+RestrictAddressFamilies=AF_UNIX
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes

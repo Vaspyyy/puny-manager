@@ -4,11 +4,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .storage import load_vault, save_vault
-from .vault import Entry, PunyError
+from .vault import Entry, PunyError, Vault
 
 
 def export_json(master_password: str, vault_name: str, export_path: Path) -> None:
     vault = load_vault(master_password, name=vault_name)
+    export_json_vault(vault, export_path)
+
+
+def export_json_vault(vault: Vault, export_path: Path) -> None:
 
     data = {
         "version": vault.version,
@@ -17,20 +21,28 @@ def export_json(master_password: str, vault_name: str, export_path: Path) -> Non
     }
 
     for entry in vault.entries:
-        data["entries"].append({
-            "name": entry.name,
-            "username": entry.username,
-            "password": entry.password,
-            "notes": entry.notes,
-            "url": entry.url,
-            "tags": entry.tags,
-            "custom_fields": entry.custom_fields,
-        })
+        data["entries"].append(
+            {
+                "name": entry.name,
+                "username": entry.username,
+                "password": entry.password,
+                "notes": entry.notes,
+                "url": entry.url,
+                "tags": entry.tags,
+                "custom_fields": entry.custom_fields,
+            }
+        )
 
     export_path.write_text(json.dumps(data, indent=2))
 
 
 def import_json(master_password: str, vault_name: str, import_path: Path) -> None:
+    vault = load_vault(master_password, name=vault_name)
+    import_json_vault(vault, import_path)
+    save_vault(master_password, vault)
+
+
+def import_json_vault(vault: Vault, import_path: Path) -> None:
     try:
         data = json.loads(import_path.read_text())
     except (json.JSONDecodeError, UnicodeDecodeError):
@@ -41,8 +53,6 @@ def import_json(master_password: str, vault_name: str, import_path: Path) -> Non
 
     if not isinstance(data["entries"], list):
         raise PunyError("invalid_export_format")
-
-    vault = load_vault(master_password, name=vault_name)
 
     for entry_data in data["entries"]:
         if not isinstance(entry_data, dict):
@@ -63,30 +73,40 @@ def import_json(master_password: str, vault_name: str, import_path: Path) -> Non
 
         vault.add(entry)
 
-    save_vault(master_password, vault)
-
 
 def export_csv(master_password: str, vault_name: str, export_path: Path) -> None:
     vault = load_vault(master_password, name=vault_name)
+    export_csv_vault(vault, export_path)
+
+
+def export_csv_vault(vault: Vault, export_path: Path) -> None:
 
     with open(export_path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "name", "username", "password", "notes", "url", "tags", "custom_fields"
-        ])
+        writer = csv.DictWriter(
+            f, fieldnames=["name", "username", "password", "notes", "url", "tags", "custom_fields"]
+        )
         writer.writeheader()
         for entry in vault.entries:
-            writer.writerow({
-                "name": entry.name,
-                "username": entry.username,
-                "password": entry.password,
-                "notes": entry.notes,
-                "url": entry.url,
-                "tags": ",".join(entry.tags),
-                "custom_fields": json.dumps(entry.custom_fields),
-            })
+            writer.writerow(
+                {
+                    "name": entry.name,
+                    "username": entry.username,
+                    "password": entry.password,
+                    "notes": entry.notes,
+                    "url": entry.url,
+                    "tags": ",".join(entry.tags),
+                    "custom_fields": json.dumps(entry.custom_fields),
+                }
+            )
 
 
 def import_csv(master_password: str, vault_name: str, import_path: Path) -> None:
+    vault = load_vault(master_password, name=vault_name)
+    import_csv_vault(vault, import_path)
+    save_vault(master_password, vault)
+
+
+def import_csv_vault(vault: Vault, import_path: Path) -> None:
     try:
         with open(import_path, newline="") as f:
             reader = csv.DictReader(f)
@@ -97,15 +117,11 @@ def import_csv(master_password: str, vault_name: str, import_path: Path) -> None
     if not rows:
         return
 
-    vault = load_vault(master_password, name=vault_name)
-
     for row in rows:
         try:
             tags = [t.strip() for t in row.get("tags", "").split(",") if t.strip()]
             custom_fields = (
-                json.loads(row.get("custom_fields", "{}"))
-                if row.get("custom_fields")
-                else {}
+                json.loads(row.get("custom_fields", "{}")) if row.get("custom_fields") else {}
             )
 
             entry = Entry(
@@ -121,5 +137,3 @@ def import_csv(master_password: str, vault_name: str, import_path: Path) -> None
             raise PunyError("invalid_export_format") from None
 
         vault.add(entry)
-
-    save_vault(master_password, vault)

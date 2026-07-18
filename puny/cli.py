@@ -1,21 +1,33 @@
 import argparse
+import contextlib
 import shutil
 import subprocess
 from getpass import getpass
 from pathlib import Path
 
+from . import howdy
 from .config import get_config, set_config
 from .crypto import KDF_ARGON2ID, LEVEL_BALANCED, LEVEL_FAST, LEVEL_PARANOID
-from .export import export_json, import_csv, import_json
+from .export import (
+    export_csv_vault,
+    export_json_vault,
+    import_csv_vault,
+    import_json_vault,
+)
+from .howdy import HowdyError
 from .i18n import STRINGS, get_lang, t
 from .storage import (
     config_dir,
     create_vault,
     delete_vault,
+    disable_howdy_vault,
     get_active_vault,
     lang_path,
     list_vaults,
     load_vault,
+    load_vault_with_key,
+    prepare_howdy_enrollment,
+    read_vault_header,
     remove_backup,
     save_vault,
     set_active_vault,
@@ -69,6 +81,51 @@ def _get_master_password(args: argparse.Namespace) -> str:
     return getpass(t("master_password"))
 
 
+def _howdy_reason(code: str) -> str:
+    try:
+        return t(f"howdy_reason_{code}")
+    except KeyError:
+        return t("howdy_reason_helper_failed")
+
+
+def _raise_howdy(error: HowdyError) -> None:
+    known_codes = {
+        "helper_unavailable",
+        "tpm_unavailable",
+        "pam_unavailable",
+        "auth_failed",
+        "credential_missing",
+        "credential_failed",
+        "invalid_request",
+        "invalid_response",
+        "unsafe_storage",
+    }
+    code = error.code if error.code in known_codes else "helper_failed"
+    raise PunyError(f"howdy_reason_{code}") from None
+
+
+def _unlock_vault(args: argparse.Namespace, name: str):
+    if hasattr(args, "master_password") and args.master_password:
+        password = args.master_password
+        return load_vault(password, name=name), password
+
+    header = read_vault_header(name)
+    if header.howdy_enabled and header.vault_id is not None:
+        print(t("howdy_attempting"))
+        try:
+            data_key = howdy.unlock(header.vault_id)
+            return load_vault_with_key(data_key, name=name), None
+        except HowdyError as error:
+            print(t("howdy_fallback", reason=_howdy_reason(error.code)))
+        except PunyError as error:
+            if error.key != "vault_decrypt_failed":
+                raise
+            print(t("howdy_fallback", reason=t("howdy_reason_invalid_key")))
+
+    password = getpass(t("master_password"))
+    return load_vault(password, name=name), password
+
+
 def cmd_lang(args: argparse.Namespace) -> None:
     if args.lang is None:
         current = get_lang()
@@ -109,11 +166,11 @@ def cmd_create(args: argparse.Namespace) -> None:
 
 def cmd_list(args: argparse.Namespace) -> None:
     name = _require_active_vault()
-    m = _get_master_password(args)
-    v = load_vault(m, name=name)
+    v, _m = _unlock_vault(args, name)
     entries = v.entries
     if hasattr(args, "tag") and args.tag:
         from .util import filter_by_tag
+
         entries = filter_by_tag(entries, args.tag)
     if not entries:
         print(t("no_entries"))
@@ -177,8 +234,7 @@ def _create_entry_from_args(args: argparse.Namespace) -> Entry:
 
 def cmd_add(args: argparse.Namespace) -> None:
     name = _require_active_vault()
-    m = _get_master_password(args)
-    v = load_vault(m, name=name)
+    v, m = _unlock_vault(args, name)
 
     if hasattr(args, "entry_name") and args.entry_name:
         e = _create_entry_from_args(args)
@@ -199,8 +255,7 @@ def cmd_add(args: argparse.Namespace) -> None:
 
 def cmd_get(args: argparse.Namespace) -> None:
     name = _require_active_vault()
-    m = _get_master_password(args)
-    v = load_vault(m, name=name)
+    v, _m = _unlock_vault(args, name)
     e = smart_find(v.entries, args.name)
     if not e:
         raise PunyError("entry_not_found", name=args.name)
@@ -226,8 +281,7 @@ def cmd_get(args: argparse.Namespace) -> None:
 
 def cmd_rm(args: argparse.Namespace) -> None:
     name = _require_active_vault()
-    m = _get_master_password(args)
-    v = load_vault(m, name=name)
+    v, m = _unlock_vault(args, name)
     e = smart_find(v.entries, args.name)
     if not e:
         raise PunyError("entry_not_found", name=args.name)
@@ -238,8 +292,7 @@ def cmd_rm(args: argparse.Namespace) -> None:
 
 def cmd_stats(args: argparse.Namespace) -> None:
     name = _require_active_vault()
-    m = _get_master_password(args)
-    v = load_vault(m, name=name)
+    v, _m = _unlock_vault(args, name)
     path = vault_path(name)
 
     stat = path.stat()
@@ -248,6 +301,7 @@ def cmd_stats(args: argparse.Namespace) -> None:
     level_name = level_names.get(v.level_id, str(v.level_id))
 
     from datetime import datetime, timezone
+
     created = datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc).strftime("%Y-%m-%d")
     modified = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).strftime("%Y-%m-%d %H:%M")
 
@@ -274,9 +328,7 @@ def cmd_stats(args: argparse.Namespace) -> None:
 
         dupe_sets = analysis["duplicate_sets"]
         if dupe_sets:
-            dupe_desc = ", ".join(
-                f"{len(s)}×" for s in sorted(dupe_sets, key=len, reverse=True)
-            )
+            dupe_desc = ", ".join(f"{len(s)}×" for s in sorted(dupe_sets, key=len, reverse=True))
             print(f"  {t('stats_duplicates', sets=len(dupe_sets))} ({dupe_desc})")
         else:
             print(f"  {t('stats_duplicates', sets=0)}")
@@ -333,8 +385,7 @@ def cmd_passwd(args: argparse.Namespace) -> None:
 
 def cmd_edit(args: argparse.Namespace) -> None:
     name = _require_active_vault()
-    m = _get_master_password(args)
-    v = load_vault(m, name=name)
+    v, m = _unlock_vault(args, name)
 
     old = smart_find(v.entries, args.name)
     if not old:
@@ -433,28 +484,108 @@ def cmd_vault_delete(args: argparse.Namespace) -> None:
     choice = input(t("confirm_delete", name=args.name)).strip().lower()
     if choice != "y":
         return
+    header = read_vault_header(args.name)
     delete_vault(args.name)
+    if header.howdy_enabled and header.vault_id is not None:
+        try:
+            howdy.remove(header.vault_id)
+        except HowdyError:
+            print(t("howdy_cleanup_warning"))
     print(t("vault_deleted", name=args.name))
 
 
 def cmd_export(args: argparse.Namespace) -> None:
     name = _require_active_vault()
-    m = _get_master_password(args)
+    vault, _password = _unlock_vault(args, name)
     export_path = Path(args.output)
-    export_json(m, name, export_path)
+    if args.csv:
+        export_csv_vault(vault, export_path)
+    else:
+        export_json_vault(vault, export_path)
     print(t("export_success", path=str(export_path)))
 
 
 def cmd_import(args: argparse.Namespace) -> None:
     name = _require_active_vault()
-    m = _get_master_password(args)
+    vault, password = _unlock_vault(args, name)
     import_path = Path(args.input)
 
     if args.csv:
-        import_csv(m, name, import_path)
+        import_csv_vault(vault, import_path)
     else:
-        import_json(m, name, import_path)
+        import_json_vault(vault, import_path)
+    save_vault(password, vault)
     print(t("import_success"))
+
+
+def cmd_howdy_enable(args: argparse.Namespace) -> None:
+    name = _require_active_vault()
+    try:
+        helper_status = howdy.status()
+    except HowdyError as error:
+        _raise_howdy(error)
+    if not helper_status.get("tpm"):
+        raise PunyError("howdy_reason_tpm_unavailable")
+
+    master_password = _get_master_password(args)
+    header = read_vault_header(name)
+    vault = prepare_howdy_enrollment(master_password, name)
+    if vault.vault_id is None or vault.data_key is None:
+        raise PunyError("vault_corrupt")
+    try:
+        howdy.enroll(vault.vault_id, vault.data_key)
+    except HowdyError as error:
+        _raise_howdy(error)
+
+    if not header.howdy_enabled:
+        try:
+            save_vault(master_password, vault)
+        except Exception:
+            with contextlib.suppress(HowdyError):
+                howdy.remove(vault.vault_id)
+            raise
+    print(t("howdy_enabled"))
+
+
+def cmd_howdy_disable(args: argparse.Namespace) -> None:
+    name = _require_active_vault()
+    header = read_vault_header(name)
+    if not header.howdy_enabled:
+        raise PunyError("howdy_not_enabled")
+    master_password = _get_master_password(args)
+    vault_id = disable_howdy_vault(master_password, name)
+    try:
+        howdy.remove(vault_id)
+    except HowdyError:
+        print(t("howdy_cleanup_warning"))
+    print(t("howdy_disabled"))
+
+
+def cmd_howdy_status(args: argparse.Namespace) -> None:
+    name = _require_active_vault()
+    header = read_vault_header(name)
+    if not header.howdy_enabled or header.vault_id is None:
+        print(t("howdy_status_disabled"))
+        return
+    try:
+        result = howdy.status(header.vault_id)
+    except HowdyError as error:
+        print(t("howdy_status_unavailable", reason=_howdy_reason(error.code)))
+        return
+    if not result.get("tpm"):
+        print(t("howdy_status_unavailable", reason=t("howdy_reason_tpm_unavailable")))
+    elif not result.get("enrolled"):
+        print(t("howdy_status_broken"))
+    else:
+        print(t("howdy_status_ready"))
+
+
+def cmd_howdy_test(args: argparse.Namespace) -> None:
+    try:
+        howdy.test()
+    except HowdyError as error:
+        _raise_howdy(error)
+    print(t("howdy_test_success"))
 
 
 def cmd_config(args: argparse.Namespace) -> None:
@@ -579,6 +710,23 @@ def main() -> None:
     sp_config.add_argument("key", nargs="?", help=t("arg_config_key"))
     sp_config.add_argument("value", nargs="?", help=t("arg_config_value"))
     sp_config.set_defaults(func=cmd_config)
+
+    sp_howdy = sp.add_parser("howdy", help=t("cmd_howdy"))
+    howdy_sp = sp_howdy.add_subparsers(dest="howdy_cmd", required=True)
+
+    howdy_enable_p = howdy_sp.add_parser("enable", help=t("cmd_howdy_enable"))
+    howdy_enable_p.add_argument("--master-password", help=t("arg_master_password"))
+    howdy_enable_p.set_defaults(func=cmd_howdy_enable)
+
+    howdy_disable_p = howdy_sp.add_parser("disable", help=t("cmd_howdy_disable"))
+    howdy_disable_p.add_argument("--master-password", help=t("arg_master_password"))
+    howdy_disable_p.set_defaults(func=cmd_howdy_disable)
+
+    howdy_status_p = howdy_sp.add_parser("status", help=t("cmd_howdy_status"))
+    howdy_status_p.set_defaults(func=cmd_howdy_status)
+
+    howdy_test_p = howdy_sp.add_parser("test", help=t("cmd_howdy_test"))
+    howdy_test_p.set_defaults(func=cmd_howdy_test)
 
     args = p.parse_args()
 
