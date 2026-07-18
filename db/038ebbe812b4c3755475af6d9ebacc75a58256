@@ -1,0 +1,95 @@
+completions/puny-manager.bash
+  s_1c350ff63568a9::t_f8dd06564425d0 23-24
+  s_1c350ff63568a9::t_cb6570c1155842 10,20-22
+  s_1c350ff63568a9::t_7e17ca2f87f0a7 25-26
+packaging/arch/puny-manager.tmpfiles
+  s_1c350ff63568a9::t_49d47a993a596b 1
+puny/cli.py
+  s_1c350ff63568a9::t_090d25e13e75a1 8
+  s_1c350ff63568a9::t_4abe76830f393d 173,304,331
+  s_1c350ff63568a9::t_668c2cdbd71fd3 91-106,526,538,587
+  s_1c350ff63568a9::t_358fc743bd8926 2,714-729
+  s_1c350ff63568a9::t_36460ba97f53e1 11-17,23,28-30,84-89,107-128,169,237,258,284,295,388,487,489-493,499,501-504,510,514,516-517,521-525,527-537,539-586,588
+  s_1c350ff63568a9::t_d6715ec090d704 90,589-590,730
+puny/storage.py
+  s_1c350ff63568a9::t_97d87a85370761 343,352,368-381,383-385,387-400,404,406-452
+  s_1c350ff63568a9::t_090d25e13e75a1 8
+  s_1c350ff63568a9::t_4abe76830f393d 221,237,344-349,382,386,401
+  s_1c350ff63568a9::t_0aa37714f6193f 223,402-403,405
+  s_1c350ff63568a9::t_e8c04684682128 7,21,25,31-39,190-220,222,224-236,238-245,288-294,298-324
+  s_1c350ff63568a9::t_7658a88a3f06b6 325-326,453-454
+puny/crypto.py
+  s_1c350ff63568a9::t_4abe76830f393d 73
+  s_1c350ff63568a9::t_3f300bb76361a5 11,63-67,70,75
+pyproject.toml
+  s_1c350ff63568a9::t_49d47a993a596b 7
+completions/_puny-manager
+  s_1c350ff63568a9::t_cb6570c1155842 30,50
+  s_1c350ff63568a9::t_f8dd06564425d0 51-53
+  s_1c350ff63568a9::t_8ee6ad7b681f3c 54
+completions/puny-manager.fish
+  s_1c350ff63568a9::t_f8dd06564425d0 51
+  s_1c350ff63568a9::t_cb6570c1155842 12,45-50
+puny/vault.py
+  s_1c350ff63568a9::t_3f300bb76361a5 37-42
+puny/i18n.py
+  s_1c350ff63568a9::t_4abe76830f393d 168,702
+  s_1c350ff63568a9::t_5fcd29a2de8392 803-1018
+  s_1c350ff63568a9::t_219a1b6916c0ec 1028,1030-1032
+packaging/arch/puny-manager-howdy.pam
+  s_1c350ff63568a9::t_e6fa21a7908b58 1-2
+  s_1c350ff63568a9::t_d76cc0f46afbee 3
+puny/howdy.py
+  s_1c350ff63568a9::t_090d25e13e75a1 42
+  s_1c350ff63568a9::t_949dd56da24490 1-41,43-97
+packaging/arch/puny-manager-howdy@.service
+  s_1c350ff63568a9::t_e6fa21a7908b58 1-21
+tests/test_howdy_storage.py
+  s_1c350ff63568a9::t_64068f71b4e666 1-6,8-112
+  s_1c350ff63568a9::t_7a395fc156dba6 7
+  s_1c350ff63568a9::t_9b93e369bbe6d8 113-127
+puny/export.py
+  s_1c350ff63568a9::t_016c0cacc033ea 7,12-15,40-45,79-82,104-109
+  s_1c350ff63568a9::t_4abe76830f393d 24-34,85-87,90-100,124
+README.md
+  s_1c350ff63568a9::t_0aa37714f6193f 6
+  s_1c350ff63568a9::t_cb6570c1155842 16-18,33-35,98-139
+  s_1c350ff63568a9::t_3cf8810cded12f 140
+puny/howdy_helper.py
+  s_1c350ff63568a9::t_090d25e13e75a1 3,94,149
+  s_1c350ff63568a9::t_d6eedf68d6c16a 107
+  s_1c350ff63568a9::t_810f05563d84e7 10,252-253
+  s_1c350ff63568a9::t_949dd56da24490 1-2,5-9,11-69,83-93,95-98,100-105,108-148,150-156,158-193,195-224,226-251,254-264
+  s_1c350ff63568a9::t_219a1b6916c0ec 4,99,106
+  s_1c350ff63568a9::t_3ee08d8040eba7 70-82,157,194,225
+tests/test_howdy.py
+  s_1c350ff63568a9::t_4abe76830f393d 48-49
+  s_1c350ff63568a9::t_5fea2ea265f0ce 7-12,59-115
+  s_1c350ff63568a9::t_64068f71b4e666 1-6,13-47,50-58
+packaging/arch/puny-manager-howdy.socket
+  s_1c350ff63568a9::t_e6fa21a7908b58 1-12
+tests/test_howdy_helper.py
+  s_1c350ff63568a9::t_4abe76830f393d 61-69,80-87,96-103
+  s_1c350ff63568a9::t_64068f71b4e666 1,6-19,49-60,70-79,88-95
+  s_1c350ff63568a9::t_63023810480fce 2-3,104-139
+  s_1c350ff63568a9::t_511e8764f9333c 5,27-48
+  s_1c350ff63568a9::t_b81a8704ab7468 4
+  s_1c350ff63568a9::t_1a067a828e910e 20-22,24-26
+  s_1c350ff63568a9::t_51136567bd0fa8 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "db038ebbe812b4c3755475af6d9ebacc75a58256",
+  "prompts": {},
+  "sessions": {
+    "s_1c350ff63568a9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f752e-2bbe-7e51-8504-44ed43c6d636",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Vaspyyy <lolbautz2@gmail.com>"
+    }
+  }
+}
